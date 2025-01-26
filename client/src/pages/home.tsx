@@ -46,9 +46,14 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="max-w-[700px] mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Recent Activity</h1>
+      <nav className="w-full border-b mb-6 px-6 py-4">
+        <div className="max-w-[1200px] mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <svg className="h-8 w-8" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29zm13.342 2.166a5.446 5.446 0 0 1 1.45 7.09l.002.003h-.002l-5.344 9.257c.206.01.413.016.621.016 6.627 0 12-5.373 12-12 0-1.54-.29-3.011-.818-4.366zM12 16.364a4.364 4.364 0 1 1 0-8.728 4.364 4.364 0 0 1 0 8.728Z"/>
+            </svg>
+            <h1 className="text-3xl font-bold">Recent Activity</h1>
+          </div>
           <div className="flex gap-2">
             <Link href="/docs">
               <Button variant="outline">
@@ -119,7 +124,13 @@ export default function Home() {
             </div>
           )}
         </ScrollArea>
-      </div>
-    </div>
+      </nav>
+      <div className="max-w-[700px] mx-auto px-6">
+        <CardContent className="p-6">
+          <p className="text-muted-foreground mb-4">
+            This is a feed of X.com (formerly Twitter) Spaces that have been downloaded using the Download Twitter Spaces Chrome Extension.  
+          </p>
+        </CardContent>
+        <ScrollArea className="h-[calc(100vh-12rem)] rounded-lg border">
   );
 }
