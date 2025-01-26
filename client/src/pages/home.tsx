@@ -91,7 +91,6 @@ export default function Home() {
                         <p className="font-mono">{webhook.userId}</p>
                       </div>
                       <div className="col-span-2">
-                        <p className="text-muted-foreground">Links</p>
                         <div className="flex gap-2">
                           <a
                             href={webhook.tweetUrl}
@@ -99,15 +98,7 @@ export default function Home() {
                             rel="noopener noreferrer"
                             className="text-primary hover:underline"
                           >
-                            Tweet
-                          </a>
-                          <a
-                            href={webhook.playlistUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline"
-                          >
-                            Playlist
+                            View on X
                           </a>
                         </div>
                       </div>
