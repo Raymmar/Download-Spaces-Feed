@@ -9,7 +9,7 @@ export default function Docs() {
 
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-[700px] mx-auto">
         <div className="mb-6">
           <Link href="/">
             <Button variant="ghost">
