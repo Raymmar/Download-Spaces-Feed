@@ -12,6 +12,14 @@
   }
 
   a {
-    @apply font-bold underline;
+    @apply font-bold underline text-[#9C64FB] hover:text-black;
+  }
+
+  .bg-blue-600 {
+    background-color: #9C64FB;
+  }
+
+  .hover\:bg-blue-700:hover {
+    background-color: #8451e4;
   }
 }
