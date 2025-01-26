@@ -26,7 +26,7 @@ export default function Docs() {
             <CardContent className="p-6">
               <h2 className="text-xl font-semibold mb-4">About this feed</h2>
               <p className="text-muted-foreground mb-4">
-                This website displays a live feed of every x.com (formerly Twitter) Space that has been downloaded using the Download Twitter Spaces Chrome Extension. Learn more about the extension <a href="https://chrome.google.com/webstore/detail/download-twitter/">here.</a> 
+                This website displays a live feed of every x.com (formerly Twitter) Space that has been downloaded using the Download Twitter Spaces Chrome Extension. Learn more about the extension <a href="https://chromewebstore.google.com/detail/download-twitter-spaces/hjgpigfbmdlajibmebhndhjiiohodgfi">here.</a> 
               </p>
             </CardContent>
           </Card>
