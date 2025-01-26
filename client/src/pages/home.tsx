@@ -43,8 +43,8 @@ export default function Home() {
   }, [refetch]);
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <nav className="w-full border-b mb-6 px-6 py-4">
+    <div className="min-h-screen bg-background px-6 pt-4 pb-6">
+      <nav className="w-full border-b mb-4 px-6 py-4">
         <div className="max-w-[1200px] mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
             <svg width="32" height="32" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
