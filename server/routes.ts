@@ -92,8 +92,8 @@ export function registerRoutes(app: Express): Server {
         throw validationError;
       }
 
-      // Check for recent duplicates (within last 5 minutes)
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      // Check for recent duplicates (within last 24 hours)
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
       const recentDuplicates = await db.query.webhooks.findMany({
         where: and(
@@ -101,14 +101,14 @@ export function registerRoutes(app: Express): Server {
           eq(webhooks.playlistUrl, validatedData.playlistUrl),
           eq(webhooks.spaceName, validatedData.spaceName),
           eq(webhooks.tweetUrl, validatedData.tweetUrl),
-          sql`${webhooks.createdAt} > ${fiveMinutesAgo}`
+          sql`${webhooks.createdAt} > ${twentyFourHoursAgo}`
         ),
         orderBy: [desc(webhooks.createdAt)],
       });
 
       // If a duplicate exists, return the most recent one
       if (recentDuplicates.length > 0) {
-        console.log(`${timestamp} - Duplicate webhook detected within 5 minutes, skipping insertion`);
+        console.log(`${timestamp} - Duplicate webhook detected within 24 hours, skipping insertion`);
         return res.status(200).json({
           message: "Duplicate webhook detected",
           webhook: recentDuplicates[0]
@@ -134,7 +134,7 @@ export function registerRoutes(app: Express): Server {
       res.status(201).json(insertedWebhook);
     } catch (error) {
       console.error(`${timestamp} - Webhook processing error:`, error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to process webhook",
         message: error instanceof Error ? error.message : "Unknown error"
       });
