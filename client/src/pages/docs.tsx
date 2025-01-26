@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
 export default function Docs() {
+  // Get the current hostname from window.location
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto">
@@ -26,7 +29,7 @@ export default function Docs() {
                 Send POST requests to this endpoint to submit webhook data:
               </p>
               <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
-                POST /api/webhook
+                {`POST ${baseUrl}/api/webhook`}
               </pre>
 
               <h3 className="text-lg font-semibold mt-6 mb-2">Request Body</h3>
@@ -45,7 +48,7 @@ export default function Docs() {
 
               <h3 className="text-lg font-semibold mt-6 mb-2">Example Request</h3>
               <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
-{`curl -X POST http://localhost:5000/api/webhook \\
+{`curl -X POST ${baseUrl}/api/webhook \\
   -H "Content-Type: application/json" \\
   -d '{
     "userId": "e419c3ba-e440-4800-be4c-20edc8034ad6",
@@ -58,13 +61,20 @@ export default function Docs() {
     "country": "US"
   }'`}
               </pre>
+
+              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <h3 className="text-lg font-semibold text-yellow-800 mb-2">Important Note</h3>
+                <p className="text-yellow-700">
+                  Make sure to use the exact endpoint URL shown above. The endpoint is <code>/api/webhook</code> (singular, no trailing slash).
+                </p>
+              </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="p-6">
               <h2 className="text-xl font-semibold mb-4">Additional Endpoints</h2>
-              
+
               <div className="space-y-4">
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Get Webhooks</h3>
