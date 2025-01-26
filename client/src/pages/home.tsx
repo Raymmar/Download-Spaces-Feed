@@ -66,7 +66,11 @@ export default function Home() {
             </a>
           </div>
         </div>
-
+        <CardContent className="p-6">
+          <p className="text-muted-foreground mb-4">
+            This is a feed of X.com (formerly Twitter) Spaces that have been downloaded using the Download Twitter Spaces Chrome Extension.  
+          </p>
+        </CardContent>
         <ScrollArea className="h-[calc(100vh-8rem)] rounded-lg border">
           {isLoading ? (
             <div className="space-y-4 p-4">
