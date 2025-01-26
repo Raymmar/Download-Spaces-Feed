@@ -22,12 +22,18 @@ export function registerRoutes(app: Express): Server {
 
   // Add CORS headers middleware for webhook endpoint and logging
   app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - Incoming ${req.method} request to ${req.path}`);
+    const timestamp = new Date().toISOString();
+    console.log(`${timestamp} - Incoming ${req.method} request to ${req.path}`);
+    console.log('Request headers:', req.headers);
+
+    // More permissive CORS settings
     res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+    res.header('Access-Control-Allow-Headers', '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
 
     if (req.method === 'OPTIONS') {
+      console.log(`${timestamp} - Responding to OPTIONS request`);
       res.sendStatus(200);
     } else {
       next();
@@ -36,15 +42,17 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/webhook", async (req, res) => {
     try {
-      console.log("Raw webhook request body:", req.body);
+      const timestamp = new Date().toISOString();
+      console.log(`${timestamp} - Raw webhook request body:`, req.body);
+      console.log(`${timestamp} - Content-Type:`, req.headers['content-type']);
 
       // Parse and validate the webhook data
       let validatedData;
       try {
         validatedData = webhookSchema.parse(req.body);
-        console.log("Webhook data validated successfully:", validatedData);
+        console.log(`${timestamp} - Webhook data validated successfully:`, validatedData);
       } catch (validationError) {
-        console.error("Webhook validation failed:", validationError);
+        console.error(`${timestamp} - Webhook validation failed:`, validationError);
         throw validationError;
       }
 
@@ -53,20 +61,21 @@ export function registerRoutes(app: Express): Server {
       try {
         const webhook = await db.insert(webhooks).values(validatedData).returning();
         insertedWebhook = webhook[0];
-        console.log("Webhook stored successfully:", insertedWebhook);
+        console.log(`${timestamp} - Webhook stored successfully:`, insertedWebhook);
       } catch (dbError) {
-        console.error("Database insertion failed:", dbError);
+        console.error(`${timestamp} - Database insertion failed:`, dbError);
         throw dbError;
       }
 
       // Notify connected clients
       const eventData = `data: ${JSON.stringify(insertedWebhook)}\n\n`;
-      console.log("Broadcasting to SSE clients:", eventData);
+      console.log(`${timestamp} - Broadcasting to SSE clients:`, eventData);
       clients.forEach(client => client.write(eventData));
 
       res.status(201).json(insertedWebhook);
     } catch (error) {
-      console.error("Webhook processing error:", error);
+      const timestamp = new Date().toISOString();
+      console.error(`${timestamp} - Webhook processing error:`, error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ 
           error: "Invalid webhook data", 
