@@ -96,10 +96,6 @@ export default function Home() {
                         <p className="text-muted-foreground">Location</p>
                         <p>{`${webhook.city}, ${webhook.region}, ${webhook.country}`}</p>
                       </div>
-                      <div>
-                        <p className="text-muted-foreground">Extension ID</p>
-                        <p className="font-mono">{webhook.userId}</p>
-                      </div>
                       <div className="col-span-2">
                         <div className="flex gap-2">
                           <a
