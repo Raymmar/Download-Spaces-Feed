@@ -73,12 +73,12 @@ export default function Home() {
               {webhooks.map((webhook) => (
                 <Card key={webhook.id}>
                   <CardContent className="p-4">
-                    <div className="flex justify-between mb-2">
-                      <span className="font-medium text-primary">
-                        {webhook.spaceName}
-                      </span>
+                    <div className="flex flex-col gap-2 mb-2">
                       <span className="text-sm text-muted-foreground">
                         {new Date(webhook.createdAt).toLocaleString()}
+                      </span>
+                      <span className="font-medium text-primary">
+                        {webhook.spaceName}
                       </span>
                     </div>
                     <div className="grid grid-cols-2 gap-4 text-sm">
