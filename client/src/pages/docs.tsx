@@ -19,13 +19,12 @@ export default function Docs() {
           </Link>
         </div>
 
-        <h1 className="text-2xl font-bold mb-6">Download Twitter Spaces Activity Feed</h1>
-
         <div className="space-y-6">
           <Card>
             <CardContent className="p-6">
+              <h1 className="text-2xl font-bold mb-6">Download Twitter Spaces Activity Feed</h1>
               <p className="text-muted-foreground mb-4">
-                This website displays a live feed of X.com Spaces that have been downloaded using the Download Twitter Spaces Chrome Extension. Learn more about the extension <a href="https://chromewebstore.google.com/detail/download-twitter-spaces/hjgpigfbmdlajibmebhndhjiiohodgfi">here.</a> 
+                This website displays a live feed of X.com Spaces that have been downloaded using the <a href="https://chromewebstore.google.com/detail/download-twitter-spaces/hjgpigfbmdlajibmebhndhjiiohodgfi">Download Twitter Spaces </a> Chrome Extension.
               </p>
             </CardContent>
             

@@ -43,7 +43,7 @@ export default function Home() {
   }, [refetch]);
 
   return (
-    <div className="min-h-screen bg-background px-6 pt-4 pb-6">
+    <div className="min-h-screen bg-background px-0 pt-0 pb-0">
       <nav className="w-full border-b mb-4 px-6 py-4">
         <div className="max-w-[1200px] mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
