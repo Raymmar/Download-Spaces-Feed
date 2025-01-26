@@ -10,27 +10,39 @@ import type { Webhook } from "@/types/webhook";
 
 export default function Home() {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
-  
-  const { data, isLoading } = useQuery<Webhook[]>({
+
+  const { data, isLoading, refetch } = useQuery<Webhook[]>({
     queryKey: ["/api/webhooks"],
   });
 
+  // Update webhooks when data changes
   useEffect(() => {
     if (data) {
       setWebhooks(data);
     }
   }, [data]);
 
+  // Set up SSE and refetch on mount to ensure we have latest data
   useEffect(() => {
+    // Refetch on mount to ensure we have latest data
+    refetch();
+
     const events = new EventSource("/api/events");
-    
+
     events.onmessage = (event) => {
       const webhook = JSON.parse(event.data);
       setWebhooks(prev => [webhook, ...prev]);
     };
 
-    return () => events.close();
-  }, []);
+    events.onerror = (error) => {
+      console.error("SSE Error:", error);
+      events.close();
+    };
+
+    return () => {
+      events.close();
+    };
+  }, [refetch]);
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -51,6 +63,10 @@ export default function Home() {
               {[...Array(5)].map((_, i) => (
                 <Skeleton key={i} className="h-32 w-full" />
               ))}
+            </div>
+          ) : webhooks.length === 0 ? (
+            <div className="p-4 text-center text-muted-foreground">
+              No webhooks received yet.
             </div>
           ) : (
             <div className="space-y-4 p-4">
