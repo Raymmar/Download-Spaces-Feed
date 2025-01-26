@@ -7,14 +7,14 @@ import { z } from "zod";
 import express from "express";
 
 const webhookSchema = z.object({
-  userId: z.string().min(1, "User ID is required and cannot be empty"),
-  playlistUrl: z.string().url("Playlist URL must be a valid URL"),
-  spaceName: z.string().min(1, "Space name is required"),
-  tweetUrl: z.string().url("Tweet URL must be a valid URL"),
-  ip: z.string().min(1, "IP is required"),
-  city: z.string().min(1, "City is required"),
-  region: z.string().min(1, "Region is required"),
-  country: z.string().min(1, "Country is required")
+  userId: z.string(),
+  playlistUrl: z.string().url(),
+  spaceName: z.string(),
+  tweetUrl: z.string().url(),
+  ip: z.string(),
+  city: z.string(),
+  region: z.string(),
+  country: z.string()
 });
 
 export function registerRoutes(app: Express): Server {
@@ -67,25 +67,13 @@ export function registerRoutes(app: Express): Server {
         console.log(`${timestamp} - Parsed body:`, parsedBody);
       } catch (parseError) {
         console.error(`${timestamp} - Body parsing failed:`, parseError);
-        return res.status(400).json({ 
-          error: "Invalid JSON in request body",
-          details: "Please ensure the request body is valid JSON and includes a non-empty userId"
-        });
+        return res.status(400).json({ error: "Invalid JSON in request body" });
       }
 
       // Ensure we have a body
       if (!parsedBody || Object.keys(parsedBody).length === 0) {
         console.error(`${timestamp} - Empty request body received`);
         return res.status(400).json({ error: "Request body is empty" });
-      }
-
-      // Specifically check for userId
-      if (!parsedBody.userId || parsedBody.userId === "unknown" || parsedBody.userId.trim() === "") {
-        console.error(`${timestamp} - Invalid or missing userId in request`);
-        return res.status(400).json({ 
-          error: "Invalid webhook data",
-          details: "userId is required and cannot be 'unknown' or empty"
-        });
       }
 
       // Parse and validate the webhook data
