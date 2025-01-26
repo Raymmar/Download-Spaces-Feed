@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
 import { webhooks } from "@db/schema";
-import { desc } from "drizzle-orm";
+import { desc, and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import express from "express";
 
@@ -92,7 +92,30 @@ export function registerRoutes(app: Express): Server {
         throw validationError;
       }
 
-      // Attempt to insert into database
+      // Check for recent duplicates (within last 5 minutes)
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
+      const recentDuplicates = await db.query.webhooks.findMany({
+        where: and(
+          eq(webhooks.userId, validatedData.userId),
+          eq(webhooks.playlistUrl, validatedData.playlistUrl),
+          eq(webhooks.spaceName, validatedData.spaceName),
+          eq(webhooks.tweetUrl, validatedData.tweetUrl),
+          sql`${webhooks.createdAt} > ${fiveMinutesAgo}`
+        ),
+        orderBy: [desc(webhooks.createdAt)],
+      });
+
+      // If a duplicate exists, return the most recent one
+      if (recentDuplicates.length > 0) {
+        console.log(`${timestamp} - Duplicate webhook detected within 5 minutes, skipping insertion`);
+        return res.status(200).json({
+          message: "Duplicate webhook detected",
+          webhook: recentDuplicates[0]
+        });
+      }
+
+      // If no duplicate found, proceed with insertion
       let insertedWebhook;
       try {
         const webhook = await db.insert(webhooks).values(validatedData).returning();
