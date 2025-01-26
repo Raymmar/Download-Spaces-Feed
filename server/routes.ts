@@ -20,8 +20,9 @@ export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   const clients = new Set<any>();
 
-  // Add CORS headers middleware for webhook endpoint
-  app.use('/api/webhook', (req, res, next) => {
+  // Add CORS headers middleware for webhook endpoint and logging
+  app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - Incoming ${req.method} request to ${req.path}`);
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
@@ -35,9 +36,11 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/webhook", async (req, res) => {
     try {
-      console.log("Received webhook data:", req.body);
+      console.log("Received webhook data:", JSON.stringify(req.body, null, 2));
       const data = webhookSchema.parse(req.body);
       const webhook = await db.insert(webhooks).values(data).returning();
+
+      console.log("Successfully stored webhook:", webhook[0].id);
 
       // Notify all connected clients
       const eventData = `data: ${JSON.stringify(webhook[0])}\n\n`;
@@ -46,7 +49,10 @@ export function registerRoutes(app: Express): Server {
       res.status(201).json(webhook[0]);
     } catch (error) {
       console.error("Webhook error:", error);
-      res.status(400).json({ error: "Invalid webhook data" });
+      if (error instanceof z.ZodError) {
+        console.error("Validation errors:", error.errors);
+      }
+      res.status(400).json({ error: "Invalid webhook data", details: error });
     }
   });
 
@@ -64,15 +70,18 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/events", (req, res) => {
+    console.log("New client connected to SSE");
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
     res.setHeader("Access-Control-Allow-Origin", "*");
 
     clients.add(res);
+    console.log("Total SSE clients:", clients.size);
 
     req.on("close", () => {
       clients.delete(res);
+      console.log("Client disconnected from SSE. Remaining clients:", clients.size);
     });
   });
 
