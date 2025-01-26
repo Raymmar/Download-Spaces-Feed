@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,16 +16,13 @@ export default function Home() {
     queryKey: ["/api/webhooks"],
   });
 
-  // Update webhooks when data changes
   useEffect(() => {
     if (data) {
       setWebhooks(data);
     }
   }, [data]);
 
-  // Set up SSE and refetch on mount to ensure we have latest data
   useEffect(() => {
-    // Refetch on mount to ensure we have latest data
     refetch();
 
     const events = new EventSource("/api/events");
@@ -71,12 +69,14 @@ export default function Home() {
             </a>
           </div>
         </div>
+      </nav>
+      <div className="max-w-[700px] mx-auto px-6">
         <CardContent className="p-6">
           <p className="text-muted-foreground mb-4">
             This is a feed of X.com (formerly Twitter) Spaces that have been downloaded using the Download Twitter Spaces Chrome Extension.  
           </p>
         </CardContent>
-        <ScrollArea className="h-[calc(100vh-8rem)] rounded-lg border">
+        <ScrollArea className="h-[calc(100vh-12rem)] rounded-lg border">
           {isLoading ? (
             <div className="space-y-4 p-4">
               {[...Array(5)].map((_, i) => (
@@ -124,13 +124,7 @@ export default function Home() {
             </div>
           )}
         </ScrollArea>
-      </nav>
-      <div className="max-w-[700px] mx-auto px-6">
-        <CardContent className="p-6">
-          <p className="text-muted-foreground mb-4">
-            This is a feed of X.com (formerly Twitter) Spaces that have been downloaded using the Download Twitter Spaces Chrome Extension.  
-          </p>
-        </CardContent>
-        <ScrollArea className="h-[calc(100vh-12rem)] rounded-lg border">
+      </div>
+    </div>
   );
 }
