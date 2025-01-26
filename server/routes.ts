@@ -36,23 +36,48 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/webhook", async (req, res) => {
     try {
-      console.log("Received webhook data:", JSON.stringify(req.body, null, 2));
-      const data = webhookSchema.parse(req.body);
-      const webhook = await db.insert(webhooks).values(data).returning();
+      console.log("Raw webhook request body:", req.body);
 
-      console.log("Successfully stored webhook:", webhook[0].id);
+      // Parse and validate the webhook data
+      let validatedData;
+      try {
+        validatedData = webhookSchema.parse(req.body);
+        console.log("Webhook data validated successfully:", validatedData);
+      } catch (validationError) {
+        console.error("Webhook validation failed:", validationError);
+        throw validationError;
+      }
 
-      // Notify all connected clients
-      const eventData = `data: ${JSON.stringify(webhook[0])}\n\n`;
+      // Attempt to insert into database
+      let insertedWebhook;
+      try {
+        const webhook = await db.insert(webhooks).values(validatedData).returning();
+        insertedWebhook = webhook[0];
+        console.log("Webhook stored successfully:", insertedWebhook);
+      } catch (dbError) {
+        console.error("Database insertion failed:", dbError);
+        throw dbError;
+      }
+
+      // Notify connected clients
+      const eventData = `data: ${JSON.stringify(insertedWebhook)}\n\n`;
+      console.log("Broadcasting to SSE clients:", eventData);
       clients.forEach(client => client.write(eventData));
 
-      res.status(201).json(webhook[0]);
+      res.status(201).json(insertedWebhook);
     } catch (error) {
-      console.error("Webhook error:", error);
+      console.error("Webhook processing error:", error);
       if (error instanceof z.ZodError) {
-        console.error("Validation errors:", error.errors);
+        res.status(400).json({ 
+          error: "Invalid webhook data", 
+          details: error.errors 
+        });
+      } else {
+        res.status(500).json({ 
+          error: "Failed to process webhook",
+          message: error instanceof Error ? error.message : "Unknown error"
+        });
       }
-      res.status(400).json({ error: "Invalid webhook data", details: error });
     }
   });
 
