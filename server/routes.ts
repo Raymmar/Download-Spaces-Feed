@@ -4,6 +4,7 @@ import { db } from "@db";
 import { webhooks } from "@db/schema";
 import { desc } from "drizzle-orm";
 import { z } from "zod";
+import express from "express";
 
 const webhookSchema = z.object({
   userId: z.string(),
@@ -20,12 +21,17 @@ export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   const clients = new Set<any>();
 
+  // Configure raw body parsing for webhooks
+  app.use(express.raw({ type: 'application/json' }));
+  app.use(express.text());
+
   // Add CORS headers middleware for webhook endpoint and logging
   app.use((req, res, next) => {
     const timestamp = new Date().toISOString();
     console.log(`${timestamp} - Incoming ${req.method} request to ${req.path}`);
     console.log('Request headers:', req.headers);
-    console.log('Request body:', req.body);
+    console.log('Raw body:', req.body);
+    console.log('Content type:', req.get('content-type'));
 
     // More permissive CORS settings
     res.header('Access-Control-Allow-Origin', '*');
@@ -45,11 +51,27 @@ export function registerRoutes(app: Express): Server {
     const timestamp = new Date().toISOString();
     try {
       // Log raw request details
-      console.log(`${timestamp} - Raw webhook request body:`, JSON.stringify(req.body, null, 2));
+      console.log(`${timestamp} - Raw request body:`, typeof req.body === 'string' ? req.body : JSON.stringify(req.body, null, 2));
       console.log(`${timestamp} - Content-Type:`, req.headers['content-type']);
 
-      // Ensure we have a request body
-      if (!req.body || Object.keys(req.body).length === 0) {
+      // Parse body based on content type
+      let parsedBody;
+      try {
+        if (typeof req.body === 'string') {
+          parsedBody = JSON.parse(req.body);
+        } else if (Buffer.isBuffer(req.body)) {
+          parsedBody = JSON.parse(req.body.toString());
+        } else {
+          parsedBody = req.body;
+        }
+        console.log(`${timestamp} - Parsed body:`, parsedBody);
+      } catch (parseError) {
+        console.error(`${timestamp} - Body parsing failed:`, parseError);
+        return res.status(400).json({ error: "Invalid JSON in request body" });
+      }
+
+      // Ensure we have a body
+      if (!parsedBody || Object.keys(parsedBody).length === 0) {
         console.error(`${timestamp} - Empty request body received`);
         return res.status(400).json({ error: "Request body is empty" });
       }
@@ -57,7 +79,7 @@ export function registerRoutes(app: Express): Server {
       // Parse and validate the webhook data
       let validatedData;
       try {
-        validatedData = webhookSchema.parse(req.body);
+        validatedData = webhookSchema.parse(parsedBody);
         console.log(`${timestamp} - Webhook data validated successfully:`, validatedData);
       } catch (validationError) {
         console.error(`${timestamp} - Webhook validation failed:`, validationError);
