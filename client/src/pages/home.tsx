@@ -48,11 +48,11 @@ export default function Home() {
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Webhook Feed</h1>
+          <h1 className="text-3xl font-bold">Spaces Feed</h1>
           <Link href="/docs">
             <Button variant="outline">
               <FileText className="mr-2 h-4 w-4" />
-              API Docs
+              What is this?
             </Button>
           </Link>
         </div>
@@ -87,7 +87,7 @@ export default function Home() {
                         <p>{`${webhook.city}, ${webhook.region}, ${webhook.country}`}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">User ID</p>
+                        <p className="text-muted-foreground">Extension ID</p>
                         <p className="font-mono">{webhook.userId}</p>
                       </div>
                       <div className="col-span-2">

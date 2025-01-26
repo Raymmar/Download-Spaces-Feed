@@ -19,79 +19,15 @@ export default function Docs() {
           </Link>
         </div>
 
-        <h1 className="text-3xl font-bold mb-6">API Documentation</h1>
+        <h1 className="text-3xl font-bold mb-6">Download Twitter Spaces Activity Feed</h1>
 
         <div className="space-y-6">
           <Card>
             <CardContent className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Webhook Endpoint</h2>
+              <h2 className="text-xl font-semibold mb-4">About this feed</h2>
               <p className="text-muted-foreground mb-4">
-                Send POST requests to this endpoint to submit webhook data:
+                This website displays a live feed of every x.com (formerly Twitter) Space that has been downloaded using the Download Twitter Spaces Chrome Extension. Learn more about the extension <a href="https://chrome.google.com/webstore/detail/download-twitter/">here.</a> 
               </p>
-              <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
-                {`POST ${baseUrl}/api/webhook`}
-              </pre>
-
-              <h3 className="text-lg font-semibold mt-6 mb-2">Request Body</h3>
-              <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
-{`{
-  "userId": "string",
-  "playlistUrl": "string (URL)",
-  "spaceName": "string",
-  "tweetUrl": "string (URL)",
-  "ip": "string",
-  "city": "string",
-  "region": "string",
-  "country": "string"
-}`}
-              </pre>
-
-              <h3 className="text-lg font-semibold mt-6 mb-2">Example Request</h3>
-              <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
-{`curl -X POST ${baseUrl}/api/webhook \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "userId": "e419c3ba-e440-4800-be4c-20edc8034ad6",
-    "playlistUrl": "https://video.twimg.com/ext_tw_video/1883207419527933952/pu/pl/bQZsVOTKtxg5IIvl.m3u8",
-    "spaceName": "Home / X",
-    "tweetUrl": "https://x.com/i/spaces/1vAGROOkPLPJl/peek",
-    "ip": "47.195.233.68",
-    "city": "Sarasota",
-    "region": "Florida",
-    "country": "US"
-  }'`}
-              </pre>
-
-              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <h3 className="text-lg font-semibold text-yellow-800 mb-2">Important Note</h3>
-                <p className="text-yellow-700">
-                  Make sure to use the exact endpoint URL shown above. The endpoint is <code>/api/webhook</code> (singular, no trailing slash).
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Additional Endpoints</h2>
-
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Get Webhooks</h3>
-                  <pre className="bg-muted p-4 rounded-lg">GET /api/webhooks</pre>
-                  <p className="mt-2 text-muted-foreground">
-                    Returns the 100 most recent webhook submissions.
-                  </p>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Server-Sent Events</h3>
-                  <pre className="bg-muted p-4 rounded-lg">GET /api/events</pre>
-                  <p className="mt-2 text-muted-foreground">
-                    Opens an SSE connection for real-time webhook updates.
-                  </p>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </div>
