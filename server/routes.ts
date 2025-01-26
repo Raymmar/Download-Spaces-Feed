@@ -25,6 +25,7 @@ export function registerRoutes(app: Express): Server {
     const timestamp = new Date().toISOString();
     console.log(`${timestamp} - Incoming ${req.method} request to ${req.path}`);
     console.log('Request headers:', req.headers);
+    console.log('Request body:', req.body);
 
     // More permissive CORS settings
     res.header('Access-Control-Allow-Origin', '*');
