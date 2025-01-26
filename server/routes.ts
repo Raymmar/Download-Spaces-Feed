@@ -7,7 +7,7 @@ import { z } from "zod";
 import express from "express";
 
 const webhookSchema = z.object({
-  userId: z.string(),
+  userId: z.string().min(1, "User ID is required and cannot be empty"),
   playlistUrl: z.string().url(),
   spaceName: z.string(),
   tweetUrl: z.string().url(),
@@ -67,13 +67,25 @@ export function registerRoutes(app: Express): Server {
         console.log(`${timestamp} - Parsed body:`, parsedBody);
       } catch (parseError) {
         console.error(`${timestamp} - Body parsing failed:`, parseError);
-        return res.status(400).json({ error: "Invalid JSON in request body" });
+        return res.status(400).json({ 
+          error: "Invalid JSON in request body",
+          details: "Please ensure the request body is valid JSON and includes a non-empty userId"
+        });
       }
 
       // Ensure we have a body
       if (!parsedBody || Object.keys(parsedBody).length === 0) {
         console.error(`${timestamp} - Empty request body received`);
         return res.status(400).json({ error: "Request body is empty" });
+      }
+
+      // Specifically check for userId
+      if (!parsedBody.userId || parsedBody.userId === "unknown" || parsedBody.userId.trim() === "") {
+        console.error(`${timestamp} - Invalid or missing userId in request`);
+        return res.status(400).json({ 
+          error: "Invalid webhook data",
+          details: "userId is required and cannot be 'unknown' or empty"
+        });
       }
 
       // Parse and validate the webhook data
