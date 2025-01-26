@@ -8,13 +8,13 @@ import express from "express";
 
 const webhookSchema = z.object({
   userId: z.string().min(1, "User ID is required and cannot be empty"),
-  playlistUrl: z.string().url(),
-  spaceName: z.string(),
-  tweetUrl: z.string().url(),
-  ip: z.string(),
-  city: z.string(),
-  region: z.string(),
-  country: z.string()
+  playlistUrl: z.string().url("Playlist URL must be a valid URL"),
+  spaceName: z.string().min(1, "Space name is required"),
+  tweetUrl: z.string().url("Tweet URL must be a valid URL"),
+  ip: z.string().min(1, "IP is required"),
+  city: z.string().min(1, "City is required"),
+  region: z.string().min(1, "Region is required"),
+  country: z.string().min(1, "Country is required")
 });
 
 export function registerRoutes(app: Express): Server {
