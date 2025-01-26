@@ -42,10 +42,17 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.post("/api/webhook", async (req, res) => {
+    const timestamp = new Date().toISOString();
     try {
-      const timestamp = new Date().toISOString();
-      console.log(`${timestamp} - Raw webhook request body:`, req.body);
+      // Log raw request details
+      console.log(`${timestamp} - Raw webhook request body:`, JSON.stringify(req.body, null, 2));
       console.log(`${timestamp} - Content-Type:`, req.headers['content-type']);
+
+      // Ensure we have a request body
+      if (!req.body || Object.keys(req.body).length === 0) {
+        console.error(`${timestamp} - Empty request body received`);
+        return res.status(400).json({ error: "Request body is empty" });
+      }
 
       // Parse and validate the webhook data
       let validatedData;
@@ -54,6 +61,12 @@ export function registerRoutes(app: Express): Server {
         console.log(`${timestamp} - Webhook data validated successfully:`, validatedData);
       } catch (validationError) {
         console.error(`${timestamp} - Webhook validation failed:`, validationError);
+        if (validationError instanceof z.ZodError) {
+          return res.status(400).json({
+            error: "Invalid webhook data",
+            details: validationError.errors
+          });
+        }
         throw validationError;
       }
 
@@ -75,19 +88,11 @@ export function registerRoutes(app: Express): Server {
 
       res.status(201).json(insertedWebhook);
     } catch (error) {
-      const timestamp = new Date().toISOString();
       console.error(`${timestamp} - Webhook processing error:`, error);
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ 
-          error: "Invalid webhook data", 
-          details: error.errors 
-        });
-      } else {
-        res.status(500).json({ 
-          error: "Failed to process webhook",
-          message: error instanceof Error ? error.message : "Unknown error"
-        });
-      }
+      res.status(500).json({ 
+        error: "Failed to process webhook",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
