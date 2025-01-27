@@ -95,23 +95,19 @@ export default function Home() {
                         {webhook.spaceName}
                       </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="mt-4 pt-4 border-t flex justify-between items-end text-sm">
                       <div>
                         <p className="text-muted-foreground">Location</p>
                         <p>{`${webhook.city}, ${webhook.region}, ${webhook.country}`}</p>
                       </div>
-                      <div className="col-span-2">
-                        <div className="flex gap-2">
-                          <a
-                            href={webhook.tweetUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline"
-                          >
-                            View on X
-                          </a>
-                        </div>
-                      </div>
+                      <a
+                        href={webhook.tweetUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        View on X
+                      </a>
                     </div>
                   </CardContent>
                 </Card>
