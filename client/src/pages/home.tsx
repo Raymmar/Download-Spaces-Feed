@@ -99,18 +99,18 @@ export default function Home() {
                 {webhooks.map((webhook) => (
                   <Card key={webhook.id} className="bg-white">
                     <CardContent className="p-4">
-                      {getTweetId(webhook.tweetUrl) && (
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-sm text-muted-foreground">
-                            {(() => {
-                              const date = dayjs(webhook.createdAt);
-                              const now = dayjs();
-                              const diffInDays = now.diff(date, 'day');
-                              return diffInDays > 2
-                                ? date.format('MMM D, YYYY')
-                                : date.fromNow();
-                            })()}
-                          </span>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm text-muted-foreground">
+                          {(() => {
+                            const date = dayjs(webhook.createdAt);
+                            const now = dayjs();
+                            const diffInDays = now.diff(date, 'day');
+                            return diffInDays > 2
+                              ? date.format('MMM D, YYYY')
+                              : date.fromNow();
+                          })()}
+                        </span>
+                        {getTweetId(webhook.tweetUrl) && (
                           <Button
                             variant="outline"
                             asChild
@@ -128,14 +128,12 @@ export default function Home() {
                             View on X
                             </a>
                           </Button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                       <div className={`w-full overflow-hidden rounded-lg ${getTweetId(webhook.tweetUrl) ? "-mb-4 -mt-4" : "py-2"}`}>
                         {getTweetId(webhook.tweetUrl) ? (
                           <Tweet id={getTweetId(webhook.tweetUrl)} />
-                        ) : (
-                          <p className="font-medium text-lg border border-gray-200 rounded p-4">{webhook.spaceName}</p>
-                        )}
+                        ) : null}
                       </div>
                       <div className="flex flex-col gap-1">
                         <div>
