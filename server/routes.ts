@@ -154,25 +154,11 @@ export function registerRoutes(app: Express): Server {
 
   app.get("/api/webhooks", async (_req, res) => {
     try {
-      // Use SQL to fetch unique webhooks ordered by creation date
-      const uniqueWebhooks = await db.execute(sql`
-        WITH RankedWebhooks AS (
-          SELECT *,
-                 ROW_NUMBER() OVER (
-                   PARTITION BY user_id, playlist_url, space_name, tweet_url
-                   ORDER BY created_at DESC
-                 ) as rn
-          FROM webhooks
-        )
-        SELECT id, user_id, playlist_url, space_name, tweet_url, 
-               ip, city, region, country, created_at
-        FROM RankedWebhooks
-        WHERE rn = 1
-        ORDER BY created_at DESC
-        LIMIT 100
-      `);
-
-      res.json(uniqueWebhooks.rows);
+      const results = await db.query.webhooks.findMany({
+        orderBy: [desc(webhooks.createdAt)],
+        limit: 100
+      });
+      res.json(results);
     } catch (error) {
       console.error("Error fetching webhooks:", error);
       res.status(500).json({ error: "Failed to fetch webhooks" });
