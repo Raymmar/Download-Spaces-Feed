@@ -181,7 +181,8 @@ const csvData = `Date,Weekly users
 1/22/25,3010
 1/23/25,3030
 1/24/25,3028
-1/25/25,3059`;
+1/25/25,3059
+1/26/25,3070`;
 
 type ChartDataPoint = {
   date: string;
@@ -260,7 +261,7 @@ export function StatsWidget() {
               {chartData[chartData.length - 1]?.users.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              Total active installations. Chart updated weekly-ish.
+              Total active installations.
             </p>
           </CardContent>
         </Card>
@@ -274,7 +275,7 @@ export function StatsWidget() {
               {webhookCount?.toLocaleString() ?? "Loading..."}
             </div>
             <p className="text-xs text-muted-foreground">
-              Twitter Spaces downloaded since Jan 25, 2025
+              Twitter Spaces downloaded
             </p>
           </CardContent>
         </Card>
