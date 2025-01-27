@@ -112,7 +112,7 @@ export default function Home() {
                         variant="outline"
                         asChild
                         size="sm"
-                        className="gap-2"
+                        className="gap-1 h-7 px-2 text-xs"
                       >
                         <a
                           href={webhook.tweetUrl}
