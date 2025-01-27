@@ -46,7 +46,7 @@ export default function Home() {
   }, [refetch]);
 
   return (
-    <div className="min-h-screen bg-background px-0 pt-0 pb-0">
+    <div className="min-h-screen bg-gray-50 px-0 pt-0 pb-0">
       <nav className="w-full border-b px-6 py-4 fixed top-0 left-0 bg-background z-50">
         <div className="max-w-[1200px] mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -88,7 +88,7 @@ export default function Home() {
           ) : (
             <div className="space-y-4 p-4">
               {webhooks.map((webhook) => (
-                <Card key={webhook.id}>
+                <Card key={webhook.id} className="bg-white">
                   <CardContent className="p-4">
                     <div className="flex flex-col gap-4 mb-2">
                       <span className="text-sm text-muted-foreground">
