@@ -133,26 +133,40 @@ export function registerRoutes(app: Express): Server {
 
   app.get("/api/webhooks", async (_req, res) => {
     try {
-      // Get unique webhooks based on IP, spaceName, and tweetUrl
-      const results = await db.query.webhooks.findMany({
-        orderBy: [desc(webhooks.createdAt)],
-        limit: 200
-      });
-
-      // Filter out duplicates within 24 hours server-side
+      // Get the most recent unique webhooks using a similar approach to the count endpoint
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      const seen = new Set<string>();
-      const uniqueResults = results.filter(webhook => {
-        const key = `${webhook.ip}-${webhook.spaceName}-${webhook.tweetUrl}`;
-        const isRecent = new Date(webhook.createdAt) > twentyFourHoursAgo;
-        if (seen.has(key) && isRecent) {
-          return false;
-        }
-        seen.add(key);
-        return true;
-      });
 
-      res.json(uniqueResults);
+      // First, get the distinct combinations with their latest timestamp
+      const distinctWebhooks = await db
+        .select({
+          tweetUrl: webhooks.tweetUrl,
+          spaceName: webhooks.spaceName,
+          ip: webhooks.ip,
+          maxCreatedAt: sql<Date>`MAX(${webhooks.createdAt})`
+        })
+        .from(webhooks)
+        .where(sql`${webhooks.createdAt} > ${twentyFourHoursAgo}`)
+        .groupBy(webhooks.tweetUrl, webhooks.spaceName, webhooks.ip)
+        .orderBy(sql`MAX(${webhooks.createdAt}) DESC`)
+        .limit(200);
+
+      // Then get the full webhook details for these distinct combinations
+      const uniqueWebhooks = await Promise.all(
+        distinctWebhooks.map(async (distinct) => {
+          const webhook = await db.query.webhooks.findFirst({
+            where: and(
+              eq(webhooks.tweetUrl, distinct.tweetUrl),
+              eq(webhooks.spaceName, distinct.spaceName),
+              eq(webhooks.ip, distinct.ip),
+              eq(webhooks.createdAt, distinct.maxCreatedAt)
+            )
+          });
+          return webhook;
+        })
+      );
+
+      // Filter out any null values and send response
+      res.json(uniqueWebhooks.filter(Boolean));
     } catch (error) {
       console.error("Error fetching webhooks:", error);
       res.status(500).json({ error: "Failed to fetch webhooks" });

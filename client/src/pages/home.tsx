@@ -14,19 +14,6 @@ import { StatsWidget } from "@/components/StatsWidget";
 
 dayjs.extend(relativeTime);
 
-// Helper function to check for duplicates
-const isDuplicate = (webhook: Webhook, webhooks: Webhook[]): boolean => {
-  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
-  return webhooks.some(existing => 
-    existing.id !== webhook.id && // Don't compare with self
-    existing.ip === webhook.ip &&
-    existing.spaceName === webhook.spaceName &&
-    existing.tweetUrl === webhook.tweetUrl &&
-    new Date(existing.createdAt) > twentyFourHoursAgo
-  );
-};
-
 export default function Home() {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
 
@@ -36,16 +23,7 @@ export default function Home() {
 
   useEffect(() => {
     if (data) {
-      // Filter out duplicates from initial data
-      const uniqueWebhooks = data.reduce((acc: Webhook[], webhook) => {
-        if (!isDuplicate(webhook, acc)) {
-          acc.push(webhook);
-        }
-        return acc;
-      }, []);
-
-      // Limit to 200 most recent webhooks
-      setWebhooks(uniqueWebhooks.slice(0, 200));
+      setWebhooks(data);
     }
   }, [data]);
 
@@ -55,13 +33,11 @@ export default function Home() {
     const events = new EventSource("/api/events");
 
     events.onmessage = (event) => {
-      const newWebhook = JSON.parse(event.data);
+      const webhook = JSON.parse(event.data);
       setWebhooks((prev) => {
-        // Check if this webhook would be a duplicate
-        if (isDuplicate(newWebhook, prev)) {
-          return prev;
-        }
-        return [newWebhook, ...prev.slice(0, 199)]; // Keep max 200 items
+        // Since backend handles uniqueness, we just need to prepend new webhook
+        // and maintain the maximum length
+        return [webhook, ...prev.slice(0, 199)];
       });
     };
 
@@ -142,7 +118,7 @@ export default function Home() {
             ) : (
               <div className="space-y-4 pt-4 pr-4">
                 {webhooks.map((webhook) => (
-                  <Card key={webhook.id} className="bg-white">
+                  <Card key={webhook.id}>
                     <CardContent className="p-4">
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-sm text-muted-foreground">
@@ -188,9 +164,7 @@ export default function Home() {
                       </div>
                       <div className="flex flex-col gap-1">
                         <div>
-                          <p className="text-muted-foreground">
-                            Download from:
-                          </p>
+                          <p className="text-muted-foreground">Download from:</p>
                           <p>{`${webhook.city}, ${webhook.region}, ${webhook.country}`}</p>
                         </div>
                       </div>
