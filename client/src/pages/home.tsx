@@ -82,7 +82,7 @@ export default function Home() {
         </div>
       </nav>
       <div className="max-w-[1200px] mx-auto mt-[72px] px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-[600px_1fr] gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[600px_1fr] gap-4">
           <ScrollArea className="">
             {isLoading ? (
               <div className="space-y-4 p-4">
@@ -105,7 +105,7 @@ export default function Home() {
                             const date = dayjs(webhook.createdAt);
                             const now = dayjs();
                             const diffInDays = now.diff(date, 'day');
-                            return diffInDays > 2 
+                            return diffInDays > 2
                               ? date.format('MMM D, YYYY')
                               : date.fromNow();
                           })()}

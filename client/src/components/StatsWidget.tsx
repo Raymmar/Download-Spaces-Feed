@@ -45,8 +45,12 @@ const chartData: ChartDataPoint[] = csvData
   .slice(1)
   .map((line: string) => {
     const [date, users] = line.split(',');
+    const parsedDate = new Date(date);
     return {
-      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      date: parsedDate.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric'
+      }),
       users: parseInt(users) || 0
     };
   })
@@ -72,6 +76,8 @@ export function StatsWidget() {
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
+                  interval="preserveStartEnd"
+                  minTickGap={30}
                   tickFormatter={(value) => value.split(' ')[0]}
                 />
                 <YAxis 
@@ -126,5 +132,4 @@ export function StatsWidget() {
       </div>
     </div>
   );
-
 }
