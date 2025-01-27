@@ -159,7 +159,9 @@ export function registerRoutes(app: Express): Server {
   // Fix TypeScript errors by properly typing the duplicateIds array
   app.post("/api/cleanup-duplicates", async (_req, res) => {
     try {
+      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       const allWebhooks = await db.query.webhooks.findMany({
+        where: sql`${webhooks.createdAt} > ${oneWeekAgo}`,
         orderBy: [desc(webhooks.createdAt)]
       });
 
@@ -167,7 +169,7 @@ export function registerRoutes(app: Express): Server {
       const duplicateIds: string[] = [];
 
       allWebhooks.forEach((webhook) => {
-        const key = `${webhook.userId}-${webhook.playlistUrl}-${webhook.spaceName}-${webhook.tweetUrl}`;
+        const key = `${webhook.ip}-${webhook.spaceName}-${webhook.tweetUrl}`;
         if (uniqueKeys.has(key)) {
           duplicateIds.push(webhook.id);
         } else {
