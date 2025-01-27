@@ -32,7 +32,8 @@ const csvData = `Date,Weekly users
 1/22/25,3010
 1/23/25,3030
 1/24/25,3028
-1/25/25,3059`;
+1/25/25,3059
+1/26/25,0`;
 
 type ChartDataPoint = {
   date: string;
