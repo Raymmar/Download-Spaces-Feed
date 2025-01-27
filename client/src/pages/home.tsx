@@ -130,7 +130,7 @@ export default function Home() {
                       {getTweetId(webhook.tweetUrl) ? (
                         <Tweet id={getTweetId(webhook.tweetUrl)} />
                       ) : (
-                        <p className="font-medium text-lg border border-gray-200 rounded p-1">{webhook.spaceName}</p>
+                        <p className="font-medium text-lg border border-gray-200 rounded p-4">{webhook.spaceName}</p>
                       )}
                     </div>
                     <div className="flex flex-col gap-1">
