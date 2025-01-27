@@ -1,39 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 
-// Parse CSV data
-const csvData = `Date,Weekly users
-12/28/24,2332
-12/29/24,2339
-12/30/24,2373
-12/31/24,2388
-1/1/25,2394
-1/2/25,2411
-1/3/25,2442
-1/4/25,2499
-1/5/25,2538
-1/6/25,2605
-1/7/25,2641
-1/8/25,2665
-1/9/25,2721
-1/10/25,2741
-1/11/25,2765
-1/12/25,2779
-1/13/25,2820
-1/14/25,2824
-1/15/25,2827
-1/16/25,2870
-1/17/25,2901
-1/18/25,2934
-1/19/25,2956
-1/20/25,2970
-1/21/25,2984
-1/22/25,3010
-1/23/25,3030
-1/24/25,3028
-1/25/25,3059
-1/26/25,0`;
+// Import CSV data
+const csv = await fetch('/attached_assets/Weekly users 180 days.csv').then(res => res.text());
 
 type ChartDataPoint = {
   date: string;
@@ -41,9 +12,9 @@ type ChartDataPoint = {
 };
 
 // Parse CSV data into chart format
-const chartData: ChartDataPoint[] = csvData
+const chartData: ChartDataPoint[] = csv
   .split('\n')
-  .slice(1)
+  .slice(1)  // Skip header row
   .map((line: string) => {
     const [date, users] = line.split(',');
     const parsedDate = new Date(date);
@@ -55,7 +26,7 @@ const chartData: ChartDataPoint[] = csvData
       users: parseInt(users) || 0
     };
   })
-  .filter((data: ChartDataPoint) => data.users > 0);
+  .filter((data: ChartDataPoint) => data.users > 0); // Remove entries with 0 users
 
 export function StatsWidget() {
   const { data: webhookCount } = useQuery<number>({
@@ -87,13 +58,16 @@ export function StatsWidget() {
                   axisLine={false}
                   tickFormatter={(value) => `${(value / 1000).toFixed(1)}k`}
                 />
-                <Tooltip />
+                <Tooltip 
+                  formatter={(value: number) => [value.toLocaleString(), "Users"]}
+                  labelFormatter={(label) => `Date: ${label}`}
+                />
                 <Area
                   type="monotone"
                   dataKey="users"
-                  fill="hsl(var(--primary))"
+                  fill="#9C64FB"
                   fillOpacity={0.2}
-                  stroke="hsl(var(--primary))"
+                  stroke="#9C64FB"
                   strokeWidth={2}
                 />
               </AreaChart>
@@ -112,7 +86,7 @@ export function StatsWidget() {
               {chartData[chartData.length - 1]?.users.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              Total active installations
+              Total active installations. Chart updated weekly.
             </p>
           </CardContent>
         </Card>
@@ -126,7 +100,7 @@ export function StatsWidget() {
               {webhookCount?.toLocaleString() ?? "Loading..."}
             </div>
             <p className="text-xs text-muted-foreground">
-              Total recordings saved
+              Twitter Spaces downloaded since Jan 25, 2025
             </p>
           </CardContent>
         </Card>
