@@ -76,9 +76,9 @@ export function StatsWidget() {
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
-                  interval="preserveStartEnd"
-                  minTickGap={30}
-                  tickFormatter={(value) => value.split(' ')[0]}
+                  interval={6}
+                  minTickGap={20}
+                  tickFormatter={(value) => value}
                 />
                 <YAxis 
                   fontSize={12}

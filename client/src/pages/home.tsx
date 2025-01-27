@@ -82,7 +82,7 @@ export default function Home() {
         </div>
       </nav>
       <div className="max-w-[1200px] mx-auto mt-[72px] px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-[600px_1fr] gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[600px_400px] gap-4 justify-center">
           <ScrollArea className="">
             {isLoading ? (
               <div className="space-y-4 p-4">
@@ -147,7 +147,7 @@ export default function Home() {
               </div>
             )}
           </ScrollArea>
-          <div className="hidden lg:block p-4">
+          <div className="hidden lg:block">
             <StatsWidget />
           </div>
         </div>
