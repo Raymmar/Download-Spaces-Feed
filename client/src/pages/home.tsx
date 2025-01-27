@@ -137,7 +137,7 @@ export default function Home() {
                       </div>
                       <div className="flex flex-col gap-1">
                         <div>
-                          <p className="text-muted-foreground">Downloaded from:</p>
+                          <p className="text-muted-foreground">Download from:</p>
                           <p>{`${webhook.city}, ${webhook.region}, ${webhook.country}`}</p>
                         </div>
                       </div>

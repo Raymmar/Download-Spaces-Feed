@@ -24,7 +24,7 @@ export default function Docs() {
             <CardContent className="p-6">
               <h1 className="text-2xl font-bold mb-6">Download Twitter Spaces Activity Feed</h1>
               <p className="text-muted-foreground mb-4">
-                This website displays a live feed of X.com Spaces that have been downloaded using the <a href="https://chromewebstore.google.com/detail/download-twitter-spaces/hjgpigfbmdlajibmebhndhjiiohodgfi">Download Twitter Spaces </a> Chrome Extension.
+                This website displays a live activity feed of users downloading content with the <a href="https://chromewebstore.google.com/detail/download-twitter-spaces/hjgpigfbmdlajibmebhndhjiiohodgfi">Download Twitter Spaces </a> Chrome Extension.
               </p>
               <Button variant="default">
                 <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
