@@ -108,9 +108,11 @@ export default function Home() {
                             : date.fromNow();
                         })()}
                       </span>
-                      <span className="font-medium text-primary">
-                        {webhook.spaceName}
-                      </span>
+                      {!getTweetId(webhook.tweetUrl) && (
+                        <span className="font-medium text-primary">
+                          {webhook.spaceName}
+                        </span>
+                      )}
                     </div>
                     <div className="w-full overflow-hidden rounded-lg">
                       {getTweetId(webhook.tweetUrl) ? (
