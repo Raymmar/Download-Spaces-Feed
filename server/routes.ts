@@ -160,10 +160,13 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/cleanup-duplicates", async (_req, res) => {
     try {
       const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      console.log("Fetching webhooks since:", oneWeekAgo);
+      
       const allWebhooks = await db.query.webhooks.findMany({
         where: sql`${webhooks.createdAt} > ${oneWeekAgo}`,
         orderBy: [desc(webhooks.createdAt)]
       });
+      console.log("Found webhooks:", allWebhooks.length);
 
       const uniqueKeys = new Set<string>();
       const duplicateIds: string[] = [];
@@ -176,9 +179,14 @@ export function registerRoutes(app: Express): Server {
           uniqueKeys.add(key);
         }
       });
+      
+      console.log("Found duplicate IDs:", duplicateIds.length);
 
       if (duplicateIds.length > 0) {
-        await db.delete(webhooks).where(in_(webhooks.id, duplicateIds));
+        const result = await db.delete(webhooks)
+          .where(in_(webhooks.id, duplicateIds))
+          .returning();
+        console.log("Deleted webhooks:", result.length);
       }
 
       res.json({ 
