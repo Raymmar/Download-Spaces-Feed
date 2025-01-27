@@ -82,8 +82,8 @@ export default function Home() {
         </div>
       </nav>
       <div className="max-w-[1200px] mx-auto mt-[72px] px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-[600px_1fr]">
-          <ScrollArea className="">
+        <div className="grid grid-cols-1 lg:grid-cols-[600px_1fr] gap-4">
+          <ScrollArea className="h-[calc(100vh-88px)]">
             {isLoading ? (
               <div className="space-y-4 p-4">
                 {[...Array(5)].map((_, i) => (
@@ -147,8 +147,10 @@ export default function Home() {
               </div>
             )}
           </ScrollArea>
-          <div className="hidden lg:block pt-4 sticky top-[88px]">
-            <StatsWidget />
+          <div className="hidden lg:block">
+            <div className="sticky top-[88px]">
+              <StatsWidget />
+            </div>
           </div>
         </div>
       </div>
