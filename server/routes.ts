@@ -191,10 +191,25 @@ export function registerRoutes(app: Express): Server {
 
   app.get("/api/webhooks", async (_req, res) => {
     try {
-      const results = await db.query.webhooks.findMany({
-        orderBy: [desc(webhooks.createdAt)],
-        limit: 100
-      });
+      // Use a CTE with ROW_NUMBER to get only the most recent entry for each unique combination
+      const results = await db.execute<typeof webhooks.$inferSelect>(sql`
+        WITH RankedWebhooks AS (
+          SELECT *,
+            ROW_NUMBER() OVER (
+              PARTITION BY tweet_url, space_name, ip
+              ORDER BY created_at DESC
+            ) as rn
+          FROM ${webhooks}
+        )
+        SELECT 
+          id, user_id, playlist_url, space_name, 
+          tweet_url, ip, city, region, country, created_at
+        FROM RankedWebhooks 
+        WHERE rn = 1
+        ORDER BY created_at DESC
+        LIMIT 100
+      `);
+
       res.json(results);
     } catch (error) {
       console.error("Error fetching webhooks:", error);
