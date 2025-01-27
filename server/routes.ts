@@ -108,8 +108,7 @@ export function registerRoutes(app: Express): Server {
 
       const recentDuplicates = await db.query.webhooks.findMany({
         where: and(
-          eq(webhooks.userId, validatedData.userId),
-          eq(webhooks.playlistUrl, validatedData.playlistUrl),
+          eq(webhooks.ip, validatedData.ip),
           eq(webhooks.spaceName, validatedData.spaceName),
           eq(webhooks.tweetUrl, validatedData.tweetUrl),
           sql`${webhooks.createdAt} > ${twentyFourHoursAgo}`
