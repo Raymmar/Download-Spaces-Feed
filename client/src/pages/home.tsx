@@ -126,7 +126,7 @@ export default function Home() {
                         </a>
                       </Button>
                     </div>
-                    <div className="w-full overflow-hidden rounded-lg -mb-4 -mt-4">
+                    <div className={`w-full overflow-hidden rounded-lg ${getTweetId(webhook.tweetUrl) ? "-mb-4 -mt-4" : "py-2"}`}>
                       {getTweetId(webhook.tweetUrl) ? (
                         <Tweet id={getTweetId(webhook.tweetUrl)} />
                       ) : null}
