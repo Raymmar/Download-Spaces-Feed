@@ -11,11 +11,4 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 
-  a {
-    @apply font-bold underline;
-  }
-
-  button a {
-    @apply no-underline;
-  }
 }
