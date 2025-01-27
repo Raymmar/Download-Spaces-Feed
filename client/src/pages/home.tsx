@@ -44,7 +44,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background px-0 pt-0 pb-0">
-      <nav className="w-full border-b mb-4 px-6 py-4">
+      <nav className="w-full border-b px-6 py-4 fixed top-0 left-0 bg-background z-50">
         <div className="max-w-[1200px] mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
             <svg width="32" height="32" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -70,7 +70,7 @@ export default function Home() {
           </div>
         </div>
       </nav>
-      <div className="max-w-[700px] mx-auto px-6">
+      <div className="max-w-[700px] mx-auto px-6 mt-[72px]">
         <ScrollArea className="h-[calc(100vh-12rem)] rounded-lg border">
           {isLoading ? (
             <div className="space-y-4 p-4">
