@@ -80,7 +80,7 @@ export default function Home() {
           </div>
         </div>
       </nav>
-      <div className="max-w-[700px] mx-auto mt-[72px]">
+      <div className="max-w-[600px] mx-auto mt-[72px]">
         <ScrollArea className="">
           {isLoading ? (
             <div className="space-y-4 p-4">
@@ -112,7 +112,12 @@ export default function Home() {
                         {webhook.spaceName}
                       </span>
                     </div>
-                    <div className="mt-4 flex flex-col gap-4">
+                    <div className="w-full overflow-hidden rounded-lg">
+                      {getTweetId(webhook.tweetUrl) ? (
+                        <Tweet id={getTweetId(webhook.tweetUrl)} />
+                      ) : null}
+                    </div>
+                    <div className="flex flex-col gap-4">
                       <div className="flex justify-between items-center">
                         <div>
                           <p className="text-muted-foreground">Downloaded from:</p>
@@ -135,11 +140,6 @@ export default function Home() {
                             View on X
                           </a>
                         </Button>
-                      </div>
-                      <div className="w-full overflow-hidden rounded-lg">
-                        {getTweetId(webhook.tweetUrl) ? (
-                          <Tweet id={getTweetId(webhook.tweetUrl)} />
-                        ) : null}
                       </div>
                     </div>
                   </CardContent>
