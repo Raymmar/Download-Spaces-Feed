@@ -95,7 +95,7 @@ export function StatsWidget() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Active Installs</CardTitle>
@@ -126,4 +126,5 @@ export function StatsWidget() {
       </div>
     </div>
   );
+
 }
