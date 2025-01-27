@@ -129,7 +129,9 @@ export default function Home() {
                     <div className={`w-full overflow-hidden rounded-lg ${getTweetId(webhook.tweetUrl) ? "-mb-4 -mt-4" : "py-2"}`}>
                       {getTweetId(webhook.tweetUrl) ? (
                         <Tweet id={getTweetId(webhook.tweetUrl)} />
-                      ) : null}
+                      ) : (
+                        <p className="font-medium">{webhook.spaceName}</p>
+                      )}
                     </div>
                     <div className="flex flex-col gap-1">
                       <div>
