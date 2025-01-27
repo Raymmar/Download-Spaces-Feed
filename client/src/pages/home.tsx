@@ -97,7 +97,7 @@ export default function Home() {
               {webhooks.map((webhook) => (
                 <Card key={webhook.id} className="bg-white">
                   <CardContent className="p-4">
-                    <div className="flex flex-col gap-4 mb-2">
+                    <div className="flex flex-col gap-2 mb-1">
                       <span className="text-sm text-muted-foreground">
                         {(() => {
                           const date = dayjs(webhook.createdAt);
@@ -114,12 +114,12 @@ export default function Home() {
                         </span>
                       )}
                     </div>
-                    <div className="w-full overflow-hidden rounded-lg">
+                    <div className="w-full overflow-hidden rounded-lg mt-1">
                       {getTweetId(webhook.tweetUrl) ? (
                         <Tweet id={getTweetId(webhook.tweetUrl)} />
                       ) : null}
                     </div>
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-2 mt-2">
                       <div className="flex justify-between items-center">
                         <div>
                           <p className="text-muted-foreground">Downloaded from:</p>
