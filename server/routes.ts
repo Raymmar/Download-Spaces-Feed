@@ -178,7 +178,7 @@ export function registerRoutes(app: Express): Server {
       });
 
       if (duplicateIds.length > 0) {
-        await db.delete(webhooks).where(sql`id = ANY(${duplicateIds})`);
+        await db.delete(webhooks).where(sql`id = ANY(${sql.array(duplicateIds)})`);
       }
 
       res.json({ 
