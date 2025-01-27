@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
 import { webhooks } from "@db/schema";
-import { desc, and, eq, sql, in_ } from "drizzle-orm";
+import { desc, and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import express from "express";
 
@@ -64,11 +64,9 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/webhook", async (req, res) => {
     const timestamp = new Date().toISOString();
-    try {
-      // Log raw request details
-      console.log(`${timestamp} - Raw request body:`, typeof req.body === 'string' ? req.body : JSON.stringify(req.body, null, 2));
-      console.log(`${timestamp} - Content-Type:`, req.headers['content-type']);
+    console.log(`${timestamp} - Processing webhook request`);
 
+    try {
       // Parse body based on content type
       let parsedBody;
       try {
@@ -79,84 +77,79 @@ export function registerRoutes(app: Express): Server {
         } else {
           parsedBody = req.body;
         }
-        console.log(`${timestamp} - Parsed body:`, parsedBody);
+        console.log(`${timestamp} - Parsed webhook data:`, parsedBody);
       } catch (parseError) {
         console.error(`${timestamp} - Body parsing failed:`, parseError);
         return res.status(400).json({ error: "Invalid JSON in request body" });
       }
 
-      // Ensure we have a body
-      if (!parsedBody || Object.keys(parsedBody).length === 0) {
-        console.error(`${timestamp} - Empty request body received`);
-        return res.status(400).json({ error: "Request body is empty" });
-      }
+      // Validate webhook data
+      const validatedData = webhookSchema.parse(parsedBody);
+      console.log(`${timestamp} - Webhook data validated`);
 
-      // Parse and validate the webhook data
-      let validatedData;
-      try {
-        validatedData = webhookSchema.parse(parsedBody);
-        console.log(`${timestamp} - Webhook data validated successfully:`, validatedData);
-      } catch (validationError) {
-        console.error(`${timestamp} - Webhook validation failed:`, validationError);
-        if (validationError instanceof z.ZodError) {
-          return res.status(400).json({
-            error: "Invalid webhook data",
-            details: validationError.errors
-          });
-        }
-        throw validationError;
-      }
-
-      // Check for recent duplicates (within last 24 hours)
+      // Check for recent duplicates using the indexed fields
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-      const recentDuplicates = await db.query.webhooks.findMany({
-        where: and(
+      const duplicates = await db.select({
+        count: sql<number>`count(*)`,
+        latestEntry: webhooks.createdAt
+      })
+      .from(webhooks)
+      .where(
+        and(
           eq(webhooks.ip, validatedData.ip),
           eq(webhooks.spaceName, validatedData.spaceName),
           eq(webhooks.tweetUrl, validatedData.tweetUrl),
           sql`${webhooks.createdAt} > ${twentyFourHoursAgo}`
-        ),
-        orderBy: [desc(webhooks.createdAt)],
-      });
+        )
+      )
+      .groupBy(webhooks.createdAt)
+      .orderBy(desc(webhooks.createdAt))
+      .limit(1);
 
-      // If a duplicate exists, return the most recent one
-      if (recentDuplicates.length > 0) {
-        console.log(`${timestamp} - Duplicate webhook detected within 24 hours, skipping insertion`);
+      if (duplicates.length > 0 && duplicates[0].count > 0) {
+        console.log(`${timestamp} - Duplicate webhook detected within 24 hours`);
+
+        // Get the most recent duplicate entry
+        const existingEntry = await db.query.webhooks.findFirst({
+          where: and(
+            eq(webhooks.ip, validatedData.ip),
+            eq(webhooks.spaceName, validatedData.spaceName),
+            eq(webhooks.tweetUrl, validatedData.tweetUrl),
+            sql`${webhooks.createdAt} > ${twentyFourHoursAgo}`
+          ),
+          orderBy: [desc(webhooks.createdAt)]
+        });
+
         return res.status(200).json({
           message: "Duplicate webhook detected",
-          webhook: recentDuplicates[0]
+          webhook: existingEntry
         });
       }
 
       // If no duplicate found, proceed with insertion
-      let insertedWebhook;
-      try {
-        const webhook = await db.insert(webhooks).values(validatedData).returning();
-        insertedWebhook = webhook[0];
-        console.log(`${timestamp} - Webhook stored successfully:`, insertedWebhook);
-      } catch (dbError) {
-        console.error(`${timestamp} - Database insertion failed:`, dbError);
-        throw dbError;
-      }
+      const [insertedWebhook] = await db.insert(webhooks)
+        .values(validatedData)
+        .returning();
+
+      console.log(`${timestamp} - New webhook stored successfully`);
 
       // Notify connected clients
-
       const eventData = `data: ${JSON.stringify(insertedWebhook)}\n\n`;
-      console.log(`${timestamp} - Broadcasting to SSE clients:`, eventData);
       clients.forEach(client => client.write(eventData));
 
       res.status(201).json(insertedWebhook);
     } catch (error) {
       console.error(`${timestamp} - Webhook processing error:`, error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       res.status(500).json({
         error: "Failed to process webhook",
-        message: error instanceof Error ? error.message : "Unknown error"
+        message: errorMessage
       });
     }
   });
 
-  // Fix TypeScript errors by properly typing the duplicateIds array
+  // Cleanup duplicates endpoint with proper type handling
   app.post("/api/cleanup-duplicates", async (_req, res) => {
     try {
       const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -182,16 +175,14 @@ export function registerRoutes(app: Express): Server {
       console.log("Found duplicate IDs:", duplicateIds.length);
 
       if (duplicateIds.length > 0) {
-        const result = await db.delete(webhooks)
-          .where(eq(webhooks.id, duplicateIds[0]))
-          .returning();
-        console.log("Deleted webhooks result:", result);
+        const deletePromises = duplicateIds.map(id => 
+          db.delete(webhooks)
+            .where(eq(webhooks.id, id))
+            .returning()
+        );
 
-        for (let i = 1; i < duplicateIds.length; i++) {
-          await db.delete(webhooks)
-            .where(eq(webhooks.id, duplicateIds[i]))
-            .returning();
-        }
+        const results = await Promise.all(deletePromises);
+        console.log("Deleted webhooks results:", results);
       }
 
       res.json({ 
@@ -200,7 +191,11 @@ export function registerRoutes(app: Express): Server {
       });
     } catch (error) {
       console.error("Error during cleanup:", error);
-      res.status(500).json({ error: "Failed to cleanup duplicates", details: error.message });
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ 
+        error: "Failed to cleanup duplicates", 
+        message: errorMessage 
+      });
     }
   });
 
