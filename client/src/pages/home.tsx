@@ -23,7 +23,8 @@ export default function Home() {
 
   useEffect(() => {
     if (data) {
-      setWebhooks(data);
+      // Limit to 50 most recent webhooks
+      setWebhooks(data.slice(0, 50));
     }
   }, [data]);
 
