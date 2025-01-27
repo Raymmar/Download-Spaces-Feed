@@ -160,13 +160,13 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/cleanup-duplicates", async (_req, res) => {
     try {
       const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      console.log("Fetching webhooks since:", oneWeekAgo);
-      
+      console.log("Starting cleanup for webhooks since:", oneWeekAgo);
+
       const allWebhooks = await db.query.webhooks.findMany({
         where: sql`${webhooks.createdAt} > ${oneWeekAgo}`,
         orderBy: [desc(webhooks.createdAt)]
       });
-      console.log("Found webhooks:", allWebhooks.length);
+      console.log("Found total webhooks:", allWebhooks.length);
 
       const uniqueKeys = new Set<string>();
       const duplicateIds: string[] = [];
@@ -179,14 +179,19 @@ export function registerRoutes(app: Express): Server {
           uniqueKeys.add(key);
         }
       });
-      
       console.log("Found duplicate IDs:", duplicateIds.length);
 
       if (duplicateIds.length > 0) {
         const result = await db.delete(webhooks)
-          .where(in_(webhooks.id, duplicateIds))
+          .where(eq(webhooks.id, duplicateIds[0]))
           .returning();
-        console.log("Deleted webhooks:", result.length);
+        console.log("Deleted webhooks result:", result);
+
+        for (let i = 1; i < duplicateIds.length; i++) {
+          await db.delete(webhooks)
+            .where(eq(webhooks.id, duplicateIds[i]))
+            .returning();
+        }
       }
 
       res.json({ 
@@ -195,7 +200,7 @@ export function registerRoutes(app: Express): Server {
       });
     } catch (error) {
       console.error("Error during cleanup:", error);
-      res.status(500).json({ error: "Failed to cleanup duplicates" });
+      res.status(500).json({ error: "Failed to cleanup duplicates", details: error.message });
     }
   });
 
