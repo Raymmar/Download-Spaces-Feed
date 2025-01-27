@@ -90,37 +90,19 @@ export function registerRoutes(app: Express): Server {
       // Check for recent duplicates using the indexed fields
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-      const duplicates = await db.select({
-        count: sql<number>`count(*)`,
-        latestEntry: webhooks.createdAt
-      })
-      .from(webhooks)
-      .where(
-        and(
+      // Get the most recent duplicate entry if it exists
+      const existingEntry = await db.query.webhooks.findFirst({
+        where: and(
           eq(webhooks.ip, validatedData.ip),
           eq(webhooks.spaceName, validatedData.spaceName),
           eq(webhooks.tweetUrl, validatedData.tweetUrl),
           sql`${webhooks.createdAt} > ${twentyFourHoursAgo}`
-        )
-      )
-      .groupBy(webhooks.createdAt)
-      .orderBy(desc(webhooks.createdAt))
-      .limit(1);
+        ),
+        orderBy: [desc(webhooks.createdAt)]
+      });
 
-      if (duplicates.length > 0 && duplicates[0].count > 0) {
+      if (existingEntry) {
         console.log(`${timestamp} - Duplicate webhook detected within 24 hours`);
-
-        // Get the most recent duplicate entry
-        const existingEntry = await db.query.webhooks.findFirst({
-          where: and(
-            eq(webhooks.ip, validatedData.ip),
-            eq(webhooks.spaceName, validatedData.spaceName),
-            eq(webhooks.tweetUrl, validatedData.tweetUrl),
-            sql`${webhooks.createdAt} > ${twentyFourHoursAgo}`
-          ),
-          orderBy: [desc(webhooks.createdAt)]
-        });
-
         return res.status(200).json({
           message: "Duplicate webhook detected",
           webhook: existingEntry
@@ -149,63 +131,28 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Cleanup duplicates endpoint with proper type handling
-  app.post("/api/cleanup-duplicates", async (_req, res) => {
-    try {
-      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      console.log("Starting cleanup for webhooks since:", oneWeekAgo);
-
-      const allWebhooks = await db.query.webhooks.findMany({
-        where: sql`${webhooks.createdAt} > ${oneWeekAgo}`,
-        orderBy: [desc(webhooks.createdAt)]
-      });
-      console.log("Found total webhooks:", allWebhooks.length);
-
-      const uniqueKeys = new Set<string>();
-      const duplicateIds: string[] = [];
-
-      allWebhooks.forEach((webhook) => {
-        const key = `${webhook.ip}-${webhook.spaceName}-${webhook.tweetUrl}`;
-        if (uniqueKeys.has(key)) {
-          duplicateIds.push(webhook.id);
-        } else {
-          uniqueKeys.add(key);
-        }
-      });
-      console.log("Found duplicate IDs:", duplicateIds.length);
-
-      if (duplicateIds.length > 0) {
-        const deletePromises = duplicateIds.map(id => 
-          db.delete(webhooks)
-            .where(eq(webhooks.id, id))
-            .returning()
-        );
-
-        const results = await Promise.all(deletePromises);
-        console.log("Deleted webhooks results:", results);
-      }
-
-      res.json({ 
-        message: "Cleanup completed", 
-        removedCount: duplicateIds.length 
-      });
-    } catch (error) {
-      console.error("Error during cleanup:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      res.status(500).json({ 
-        error: "Failed to cleanup duplicates", 
-        message: errorMessage 
-      });
-    }
-  });
-
   app.get("/api/webhooks", async (_req, res) => {
     try {
+      // Get unique webhooks based on IP, spaceName, and tweetUrl
       const results = await db.query.webhooks.findMany({
         orderBy: [desc(webhooks.createdAt)],
-        limit: 100
+        limit: 200
       });
-      res.json(results);
+
+      // Filter out duplicates within 24 hours server-side
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const seen = new Set<string>();
+      const uniqueResults = results.filter(webhook => {
+        const key = `${webhook.ip}-${webhook.spaceName}-${webhook.tweetUrl}`;
+        const isRecent = new Date(webhook.createdAt) > twentyFourHoursAgo;
+        if (seen.has(key) && isRecent) {
+          return false;
+        }
+        seen.add(key);
+        return true;
+      });
+
+      res.json(uniqueResults);
     } catch (error) {
       console.error("Error fetching webhooks:", error);
       res.status(500).json({ error: "Failed to fetch webhooks" });

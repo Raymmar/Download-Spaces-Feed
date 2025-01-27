@@ -14,6 +14,19 @@ import { StatsWidget } from "@/components/StatsWidget";
 
 dayjs.extend(relativeTime);
 
+// Helper function to check for duplicates
+const isDuplicate = (webhook: Webhook, webhooks: Webhook[]): boolean => {
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+  return webhooks.some(existing => 
+    existing.id !== webhook.id && // Don't compare with self
+    existing.ip === webhook.ip &&
+    existing.spaceName === webhook.spaceName &&
+    existing.tweetUrl === webhook.tweetUrl &&
+    new Date(existing.createdAt) > twentyFourHoursAgo
+  );
+};
+
 export default function Home() {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
 
@@ -23,8 +36,16 @@ export default function Home() {
 
   useEffect(() => {
     if (data) {
+      // Filter out duplicates from initial data
+      const uniqueWebhooks = data.reduce((acc: Webhook[], webhook) => {
+        if (!isDuplicate(webhook, acc)) {
+          acc.push(webhook);
+        }
+        return acc;
+      }, []);
+
       // Limit to 200 most recent webhooks
-      setWebhooks(data.slice(0, 200));
+      setWebhooks(uniqueWebhooks.slice(0, 200));
     }
   }, [data]);
 
@@ -34,8 +55,14 @@ export default function Home() {
     const events = new EventSource("/api/events");
 
     events.onmessage = (event) => {
-      const webhook = JSON.parse(event.data);
-      setWebhooks((prev) => [webhook, ...prev]);
+      const newWebhook = JSON.parse(event.data);
+      setWebhooks((prev) => {
+        // Check if this webhook would be a duplicate
+        if (isDuplicate(newWebhook, prev)) {
+          return prev;
+        }
+        return [newWebhook, ...prev.slice(0, 199)]; // Keep max 200 items
+      });
     };
 
     events.onerror = (error) => {
@@ -51,7 +78,7 @@ export default function Home() {
   // Extract tweet ID from URL
   const getTweetId = (url: string) => {
     const matches = url.match(/status\/(\d+)/);
-    return matches ? matches[1] : null;
+    return matches ? matches[1] : undefined;
   };
 
   return (
