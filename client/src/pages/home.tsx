@@ -97,7 +97,7 @@ export default function Home() {
               {webhooks.map((webhook) => (
                 <Card key={webhook.id} className="bg-white">
                   <CardContent className="p-4">
-                    <div className="flex justify-between items-center mb-4">
+                    <div className="flex justify-between items-center mb-2">
                       <span className="text-sm text-muted-foreground">
                         {(() => {
                           const date = dayjs(webhook.createdAt);
