@@ -11,7 +11,7 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 
-  a:not(button a) {
+  a:not(button a, .button a) {
     @apply font-bold underline;
   }
 }
