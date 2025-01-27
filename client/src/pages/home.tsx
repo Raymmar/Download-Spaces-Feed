@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +7,10 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 import type { Webhook } from "@/types/webhook";
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+
+dayjs.extend(relativeTime)
 
 export default function Home() {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
@@ -89,7 +92,14 @@ export default function Home() {
                   <CardContent className="p-4">
                     <div className="flex flex-col gap-4 mb-2">
                       <span className="text-sm text-muted-foreground">
-                        {new Date(webhook.createdAt).toLocaleString()}
+                        {(() => {
+                          const date = dayjs(webhook.createdAt);
+                          const now = dayjs();
+                          const diffInDays = now.diff(date, 'day');
+                          return diffInDays > 2 
+                            ? date.format('MMM D, YYYY')
+                            : date.fromNow();
+                        })()}
                       </span>
                       <span className="font-medium text-primary">
                         {webhook.spaceName}
