@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
 import { webhooks } from "@db/schema";
-import { desc, and, eq, sql } from "drizzle-orm";
+import { desc, and, eq, sql, in_ } from "drizzle-orm";
 import { z } from "zod";
 import express from "express";
 
@@ -178,7 +178,7 @@ export function registerRoutes(app: Express): Server {
       });
 
       if (duplicateIds.length > 0) {
-        await db.delete(webhooks).where(sql`id = ANY(${sql.array(duplicateIds)})`);
+        await db.delete(webhooks).where(in_(webhooks.id, duplicateIds));
       }
 
       res.json({ 
