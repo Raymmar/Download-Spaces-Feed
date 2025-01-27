@@ -10,6 +10,7 @@ import type { Webhook } from "@/types/webhook";
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { Tweet } from 'react-tweet'
+import { StatsWidget } from "@/components/StatsWidget";
 
 dayjs.extend(relativeTime)
 
@@ -80,71 +81,76 @@ export default function Home() {
           </div>
         </div>
       </nav>
-      <div className="max-w-[600px] mx-auto mt-[72px]">
-        <ScrollArea className="">
-          {isLoading ? (
-            <div className="space-y-4 p-4">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-32 w-full" />
-              ))}
-            </div>
-          ) : webhooks.length === 0 ? (
-            <div className="p-4 text-center text-muted-foreground">
-              No webhooks received yet.
-            </div>
-          ) : (
-            <div className="space-y-4 p-4">
-              {webhooks.map((webhook) => (
-                <Card key={webhook.id} className="bg-white">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm text-muted-foreground">
-                        {(() => {
-                          const date = dayjs(webhook.createdAt);
-                          const now = dayjs();
-                          const diffInDays = now.diff(date, 'day');
-                          return diffInDays > 2 
-                            ? date.format('MMM D, YYYY')
-                            : date.fromNow();
-                        })()}
-                      </span>
-                      <Button
-                        variant="outline"
-                        asChild
-                        size="sm"
-                        className="gap-1 h-7 px-2 text-xs"
-                      >
-                        <a
-                          href={webhook.tweetUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
+      <div className="max-w-[1200px] mx-auto mt-[72px] px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
+          <ScrollArea className="">
+            {isLoading ? (
+              <div className="space-y-4 p-4">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-32 w-full" />
+                ))}
+              </div>
+            ) : webhooks.length === 0 ? (
+              <div className="p-4 text-center text-muted-foreground">
+                No webhooks received yet.
+              </div>
+            ) : (
+              <div className="space-y-4 p-4">
+                {webhooks.map((webhook) => (
+                  <Card key={webhook.id} className="bg-white">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm text-muted-foreground">
+                          {(() => {
+                            const date = dayjs(webhook.createdAt);
+                            const now = dayjs();
+                            const diffInDays = now.diff(date, 'day');
+                            return diffInDays > 2 
+                              ? date.format('MMM D, YYYY')
+                              : date.fromNow();
+                          })()}
+                        </span>
+                        <Button
+                          variant="outline"
+                          asChild
+                          size="sm"
+                          className="gap-1 h-7 px-2 text-xs"
                         >
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                          </svg>
-                          View on X
-                        </a>
-                      </Button>
-                    </div>
-                    <div className={`w-full overflow-hidden rounded-lg ${getTweetId(webhook.tweetUrl) ? "-mb-4 -mt-4" : "py-2"}`}>
-                      {getTweetId(webhook.tweetUrl) ? (
-                        <Tweet id={getTweetId(webhook.tweetUrl)} />
-                      ) : (
-                        <p className="font-medium text-lg border border-gray-200 rounded p-4">{webhook.spaceName}</p>
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <div>
-                        <p className="text-muted-foreground">Downloaded from:</p>
-                        <p>{`${webhook.city}, ${webhook.region}, ${webhook.country}`}</p>
+                          <a
+                            href={webhook.tweetUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                            </svg>
+                            View on X
+                          </a>
+                        </Button>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
+                      <div className={`w-full overflow-hidden rounded-lg ${getTweetId(webhook.tweetUrl) ? "-mb-4 -mt-4" : "py-2"}`}>
+                        {getTweetId(webhook.tweetUrl) ? (
+                          <Tweet id={getTweetId(webhook.tweetUrl)} />
+                        ) : (
+                          <p className="font-medium text-lg border border-gray-200 rounded p-4">{webhook.spaceName}</p>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <div>
+                          <p className="text-muted-foreground">Downloaded from:</p>
+                          <p>{`${webhook.city}, ${webhook.region}, ${webhook.country}`}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+          <div className="hidden lg:block p-4">
+            <StatsWidget />
+          </div>
+        </div>
       </div>
     </div>
   );

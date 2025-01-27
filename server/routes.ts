@@ -47,6 +47,17 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Add the webhook count endpoint
+  app.get("/api/webhooks/count", async (_req, res) => {
+    try {
+      const result = await db.select({ count: sql<number>`count(*)` }).from(webhooks);
+      res.json(result[0].count);
+    } catch (error) {
+      console.error("Error fetching webhook count:", error);
+      res.status(500).json({ error: "Failed to fetch webhook count" });
+    }
+  });
+
   app.post("/api/webhook", async (req, res) => {
     const timestamp = new Date().toISOString();
     try {
