@@ -213,8 +213,8 @@ export function StatsWidget() {
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Weekly Active Users</CardTitle>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Active Users</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[200px]">
@@ -239,7 +239,7 @@ export function StatsWidget() {
                 <Area
                   type="monotone"
                   dataKey="users"
-                  fill="hsl(var(--primary))"
+                  fill="#9C64FB"
                   fillOpacity={0.2}
                   stroke="hsl(var(--primary))"
                   strokeWidth={2}
