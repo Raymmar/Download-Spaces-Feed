@@ -70,8 +70,8 @@ export default function Home() {
           </div>
         </div>
       </nav>
-      <div className="max-w-[700px] mx-auto px-6 mt-[72px]">
-        <ScrollArea className="h-[calc(100vh-12rem)] rounded-lg border">
+      <div className="max-w-[700px] mx-auto mt-[72px]">
+        <ScrollArea className="">
           {isLoading ? (
             <div className="space-y-4 p-4">
               {[...Array(5)].map((_, i) => (
