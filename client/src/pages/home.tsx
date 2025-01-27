@@ -115,7 +115,7 @@ export default function Home() {
                             variant="outline"
                             asChild
                             size="sm"
-                            className="gap-1 h-7 px-2 text-xs"
+                            className="gap-1 h-7 px-2 text-xs hidden"
                           >
                             <a
                               href={webhook.tweetUrl}
@@ -130,7 +130,7 @@ export default function Home() {
                           </Button>
                         )}
                       </div>
-                      <div className={`w-full overflow-hidden rounded-lg ${getTweetId(webhook.tweetUrl) ? "-mb-4 -mt-4" : "py-2"}`}>
+                      <div className={`w-full overflow-hidden rounded-lg ${getTweetId(webhook.tweetUrl) ? "-mb-4 -mt-4 hidden" : "py-2"}`}>
                         {getTweetId(webhook.tweetUrl) ? (
                           <Tweet id={getTweetId(webhook.tweetUrl)} />
                         ) : null}
