@@ -87,7 +87,7 @@ export default function Home() {
               {webhooks.map((webhook) => (
                 <Card key={webhook.id}>
                   <CardContent className="p-4">
-                    <div className="flex flex-col gap-2 mb-2">
+                    <div className="flex flex-col gap-4 mb-2">
                       <span className="text-sm text-muted-foreground">
                         {new Date(webhook.createdAt).toLocaleString()}
                       </span>
@@ -95,10 +95,10 @@ export default function Home() {
                         {webhook.spaceName}
                       </span>
                     </div>
-                    <div className="mt-4 pt-4 border-t flex justify-between items-end text-sm">
+                    <div className="mt-4 flex justify-between items-end text-sm">
                       <div>
-                        <p className="text-muted-foreground">Location</p>
-                        <p>{`${webhook.city}, ${webhook.region}, ${webhook.country}`}</p>
+                        <p className="text-muted-foreground">Downloaded from:</p>
+                        <p>{`${webhook.city}, ${webhook.region},  ${webhook.country}`}</p>
                       </div>
                       <Button
                         variant="outline"
