@@ -131,7 +131,7 @@ export default function Home() {
                         <Tweet id={getTweetId(webhook.tweetUrl)} />
                       ) : null}
                     </div>
-                    <div className="flex flex-col gap-2 mt-2">
+                    <div className="flex flex-col gap-2">
                       <div>
                         <p className="text-muted-foreground">Downloaded from:</p>
                         <p>{`${webhook.city}, ${webhook.region}, ${webhook.country}`}</p>
