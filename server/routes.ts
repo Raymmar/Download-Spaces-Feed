@@ -47,14 +47,18 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Add the webhook count endpoint
+  // Update webhook count endpoint to count unique entries
   app.get("/api/webhooks/count", async (_req, res) => {
     try {
-      const result = await db.select({ count: sql<number>`count(*)` }).from(webhooks);
+      // Use a subquery to get distinct combinations first
+      const result = await db.select({
+        count: sql<number>`COUNT(DISTINCT (${webhooks.tweetUrl}, ${webhooks.spaceName}, ${webhooks.ip}))`
+      }).from(webhooks);
+
       res.json(result[0].count);
     } catch (error) {
-      console.error("Error fetching webhook count:", error);
-      res.status(500).json({ error: "Failed to fetch webhook count" });
+      console.error("Error fetching unique webhook count:", error);
+      res.status(500).json({ error: "Failed to fetch unique webhook count" });
     }
   });
 
@@ -138,41 +142,6 @@ export function registerRoutes(app: Express): Server {
 
       // Notify connected clients
 
-  app.post("/api/cleanup-duplicates", async (_req, res) => {
-    try {
-      // Get all webhooks ordered by creation date
-      const allWebhooks = await db.query.webhooks.findMany({
-        orderBy: [desc(webhooks.createdAt)]
-      });
-      
-      const uniqueKeys = new Set();
-      const duplicateIds = [];
-
-      // Identify duplicates using the same logic as webhook endpoint
-      allWebhooks.forEach((webhook) => {
-        const key = `${webhook.userId}-${webhook.playlistUrl}-${webhook.spaceName}-${webhook.tweetUrl}`;
-        if (uniqueKeys.has(key)) {
-          duplicateIds.push(webhook.id);
-        } else {
-          uniqueKeys.add(key);
-        }
-      });
-
-      // Delete identified duplicates
-      if (duplicateIds.length > 0) {
-        await db.delete(webhooks).where(sql`id = ANY(${duplicateIds})`);
-      }
-
-      res.json({ 
-        message: "Cleanup completed", 
-        removedCount: duplicateIds.length 
-      });
-    } catch (error) {
-      console.error("Error during cleanup:", error);
-      res.status(500).json({ error: "Failed to cleanup duplicates" });
-    }
-  });
-
       const eventData = `data: ${JSON.stringify(insertedWebhook)}\n\n`;
       console.log(`${timestamp} - Broadcasting to SSE clients:`, eventData);
       clients.forEach(client => client.write(eventData));
@@ -184,6 +153,39 @@ export function registerRoutes(app: Express): Server {
         error: "Failed to process webhook",
         message: error instanceof Error ? error.message : "Unknown error"
       });
+    }
+  });
+
+  // Fix TypeScript errors by properly typing the duplicateIds array
+  app.post("/api/cleanup-duplicates", async (_req, res) => {
+    try {
+      const allWebhooks = await db.query.webhooks.findMany({
+        orderBy: [desc(webhooks.createdAt)]
+      });
+
+      const uniqueKeys = new Set<string>();
+      const duplicateIds: string[] = [];
+
+      allWebhooks.forEach((webhook) => {
+        const key = `${webhook.userId}-${webhook.playlistUrl}-${webhook.spaceName}-${webhook.tweetUrl}`;
+        if (uniqueKeys.has(key)) {
+          duplicateIds.push(webhook.id);
+        } else {
+          uniqueKeys.add(key);
+        }
+      });
+
+      if (duplicateIds.length > 0) {
+        await db.delete(webhooks).where(sql`id = ANY(${duplicateIds})`);
+      }
+
+      res.json({ 
+        message: "Cleanup completed", 
+        removedCount: duplicateIds.length 
+      });
+    } catch (error) {
+      console.error("Error during cleanup:", error);
+      res.status(500).json({ error: "Failed to cleanup duplicates" });
     }
   });
 
