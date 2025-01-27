@@ -138,27 +138,13 @@ export function registerRoutes(app: Express): Server {
 
       // Notify connected clients
 
-      const eventData = `data: ${JSON.stringify(insertedWebhook)}\n\n`;
-      console.log(`${timestamp} - Broadcasting to SSE clients:`, eventData);
-      clients.forEach(client => client.write(eventData));
-
-      res.status(201).json(insertedWebhook);
-    } catch (error) {
-      console.error(`${timestamp} - Webhook processing error:`, error);
-      res.status(500).json({
-        error: "Failed to process webhook",
-        message: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-
   app.post("/api/cleanup-duplicates", async (_req, res) => {
     try {
       // Get all webhooks ordered by creation date
       const allWebhooks = await db.query.webhooks.findMany({
         orderBy: [desc(webhooks.createdAt)]
       });
-
+      
       const uniqueKeys = new Set();
       const duplicateIds = [];
 
@@ -177,9 +163,9 @@ export function registerRoutes(app: Express): Server {
         await db.delete(webhooks).where(sql`id = ANY(${duplicateIds})`);
       }
 
-      res.json({
-        message: "Cleanup completed",
-        removedCount: duplicateIds.length
+      res.json({ 
+        message: "Cleanup completed", 
+        removedCount: duplicateIds.length 
       });
     } catch (error) {
       console.error("Error during cleanup:", error);
@@ -187,27 +173,27 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/webhooks", async (req, res) => {
-    try {
-      const page = parseInt(req.query.page as string) || 0;
-      const limit = 100;
-      const offset = page * limit;
+      const eventData = `data: ${JSON.stringify(insertedWebhook)}\n\n`;
+      console.log(`${timestamp} - Broadcasting to SSE clients:`, eventData);
+      clients.forEach(client => client.write(eventData));
 
+      res.status(201).json(insertedWebhook);
+    } catch (error) {
+      console.error(`${timestamp} - Webhook processing error:`, error);
+      res.status(500).json({
+        error: "Failed to process webhook",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.get("/api/webhooks", async (_req, res) => {
+    try {
       const results = await db.query.webhooks.findMany({
         orderBy: [desc(webhooks.createdAt)],
-        limit,
-        offset
+        limit: 100
       });
-
-      // Get total count for pagination
-      const [{ count }] = await db.select({
-        count: sql<number>`count(*)::int`
-      }).from(webhooks);
-
-      res.json({
-        webhooks: results,
-        hasMore: offset + limit < count
-      });
+      res.json(results);
     } catch (error) {
       console.error("Error fetching webhooks:", error);
       res.status(500).json({ error: "Failed to fetch webhooks" });
