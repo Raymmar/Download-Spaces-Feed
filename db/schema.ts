@@ -11,7 +11,7 @@ export const webhooks = pgTable("webhooks", {
   city: text("city").notNull(),
   region: text("region").notNull(),
   country: text("country").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
 export const insertWebhookSchema = createInsertSchema(webhooks);
