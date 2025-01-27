@@ -253,30 +253,24 @@ export function StatsWidget() {
 
       <div className="grid grid-cols-2 gap-4">
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader>
             <CardTitle className="text-sm font-medium">Active Installs</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-3xl font-bold">
               {chartData[chartData.length - 1]?.users.toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Total active installations.
-            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader>
             <CardTitle className="text-sm font-medium">Spaces Downloaded</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-3xl font-bold">
               {webhookCount?.toLocaleString() ?? "Loading..."}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Twitter Spaces downloaded
-            </p>
           </CardContent>
         </Card>
       </div>
