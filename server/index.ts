@@ -6,6 +6,9 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Trust proxy settings for proper IP handling behind reverse proxy
+app.set('trust proxy', true);
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;

@@ -5,13 +5,6 @@ import { webhooks } from "@db/schema";
 import { desc, and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import express from "express";
-import rateLimit from 'express-rate-limit';
-
-// Create a rate limiter
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
 
 const webhookSchema = z.object({
   userId: z.string(),
@@ -49,9 +42,6 @@ function sanitizeWebhook(webhook: any): SanitizedWebhook {
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   const clients = new Set<any>();
-
-  // Apply rate limiter to all routes
-  app.use(limiter);
 
   // Configure raw body parsing for webhooks
   app.use(express.raw({ type: 'application/json' }));
