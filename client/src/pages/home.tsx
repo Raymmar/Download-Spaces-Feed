@@ -24,12 +24,18 @@ export default function Home() {
     queryKey: ["/api/webhooks", selectedUserId ? `?userId=${selectedUserId}` : ""],
   });
 
+  // Update webhooks when data changes or filter changes
   useEffect(() => {
     if (data) {
-      setWebhooks(data.slice(0, 200));
+      // If we have a selectedUserId, only include matching webhooks
+      const filteredWebhooks = selectedUserId
+        ? data.filter(webhook => webhook.userId === selectedUserId)
+        : data;
+      setWebhooks(filteredWebhooks.slice(0, 200));
     }
-  }, [data]);
+  }, [data, selectedUserId]);
 
+  // Setup SSE and handle real-time updates
   useEffect(() => {
     refetch();
 
@@ -40,7 +46,7 @@ export default function Home() {
       setWebhooks((prev) => {
         // Only add new webhook if it matches the current filter or no filter is applied
         if (!selectedUserId || webhook.userId === selectedUserId) {
-          return [webhook, ...prev];
+          return [webhook, ...prev.slice(0, 199)]; // Keep max 200 items
         }
         return prev;
       });
@@ -134,13 +140,13 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-[600px_1fr]">
           <ScrollArea>
             {selectedUserId && (
-              <div className="pt-4 pr-4">
+              <div className="pt-4 px-4">
                 <Card>
                   <CardContent className="p-4 flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <p className="text-sm text-muted-foreground">
                         Showing downloads for user:{" "}
-                        <span className="font-mono font-bold">{selectedUserId}</span>
+                        <span className="font-mono">{selectedUserId}</span>
                       </p>
                     </div>
                     <Button
@@ -182,7 +188,7 @@ export default function Home() {
                           })()}
                         </span>
                         {getTweetId(webhook.tweetUrl) && (
-                          <Button 
+                          <Button
                             variant="outline"
                             asChild
                             size="sm"
@@ -222,7 +228,7 @@ export default function Home() {
                         </div>
                         <div className="text-sm text-muted-foreground">
                           <span className="font-medium">Playlist URL:</span>{" "}
-                          <button 
+                          <button
                             onClick={(e) => handleCopyUrl(webhook.playlistUrl, e)}
                             className="text-primary hover:underline ml-1 font-mono break-words text-left w-full"
                           >
