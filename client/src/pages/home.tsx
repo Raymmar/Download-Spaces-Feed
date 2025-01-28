@@ -94,7 +94,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 px-0 pt-0 pb-0">
       <nav className="w-full border-b px-6 py-4 fixed top-0 left-0 bg-background z-50">
-        <div className="max-w-[1200px] mx-auto flex justify-between items-center">
+        <div className="mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
             <svg
               width="32"
@@ -145,7 +145,7 @@ export default function Home() {
                   <CardContent className="p-4 flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <p className="text-sm text-muted-foreground">
-                        Downloads for user:{" "}
+                        Extension history:{" "}
                         <span className="font-mono font-bold">{selectedUserId}</span>
                       </p>
                     </div>
