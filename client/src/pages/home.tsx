@@ -170,14 +170,15 @@ export default function Home() {
                         <div className="text-sm text-muted-foreground">
                           User ID: <span className="font-mono">{webhook.userId}</span>
                         </div>
-                        <div className="text-sm">
+                        <div className="text-sm text-muted-foreground">
+                          Space URL: 
                           <a 
                             href={webhook.playlistUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-primary hover:underline"
+                            className="text-primary hover:underline ml-1"
                           >
-                            View Space URL
+                            {webhook.playlistUrl}
                           </a>
                         </div>
                       </div>
