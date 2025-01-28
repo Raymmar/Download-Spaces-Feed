@@ -152,20 +152,35 @@ export default function Home() {
                           </Button>
                         )}
                       </div>
-                      {/* Twitter preview embed
+                      {/* Twitter preview embed */}
                       <div
-                        className={`w-full overflow-hidden rounded-lg ${getTweetId(webhook.tweetUrl) ? "hidden" : "py-0"}`}
+                        className={`w-full overflow-hidden rounded-lg ${getTweetId(webhook.tweetUrl) ? "" : "py-0"}`}
                       >
                         {getTweetId(webhook.tweetUrl) ? (
                           <Tweet id={getTweetId(webhook.tweetUrl)} />
                         ) : null}
                       </div> 
-                      {/* SpaceName / title
+                      {/* SpaceName / title */}
                       <div className="border border-gray-200 rounded-lg mt-4 mb-4 p-4">
                         <span className="font-medium text-primary">
                           {webhook.spaceName}
                         </span>
-                      </div> */}
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <div className="text-sm text-muted-foreground">
+                          User ID: <span className="font-mono">{webhook.userId}</span>
+                        </div>
+                        <div className="text-sm">
+                          <a 
+                            href={webhook.playlistUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            View Space URL
+                          </a>
+                        </div>
+                      </div>
                       <div className="flex flex-col pt-2 gap-1">
                         <div>
                           <p className="text-muted-foreground">
