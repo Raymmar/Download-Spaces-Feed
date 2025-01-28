@@ -169,17 +169,17 @@ export default function Home() {
                       <div className="flex flex-col gap-2">
                         <div className="text-sm text-muted-foreground">
                           <span className="font-medium">User ID:</span>{" "}
-                          <span className="font-mono">{webhook.user_id}</span>
+                          <span className="font-mono">{webhook.userId}</span>
                         </div>
                         <div className="text-sm text-muted-foreground">
                           <span className="font-medium">Space URL:</span>{" "}
                           <a 
-                            href={webhook.playlist_url}
+                            href={webhook.playlistUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-primary hover:underline ml-1 font-mono"
                           >
-                            {webhook.playlist_url}
+                            {webhook.playlistUrl}
                           </a>
                         </div>
                       </div>
