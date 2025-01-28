@@ -182,7 +182,7 @@ export default function Home() {
                           <span className="font-medium">Playlist URL:</span>{" "}
                           <button 
                             onClick={(e) => handleCopyUrl(webhook.playlistUrl, e)}
-                            className="text-primary hover:underline ml-1 font-mono break-words text-left"
+                            className="text-primary hover:underline ml-1 font-mono break-words text-left w-full"
                           >
                             {webhook.playlistUrl}
                           </button>
