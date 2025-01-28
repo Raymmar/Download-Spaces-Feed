@@ -1,12 +1,12 @@
 export interface Webhook {
   id: string;
-  userId: string;
-  playlistUrl: string;
-  spaceName: string;
-  tweetUrl: string;
+  user_id: string;
+  playlist_url: string;
+  space_name: string;
+  tweet_url: string;
   ip: string;
   city: string;
   region: string;
   country: string;
-  createdAt: string;
+  created_at: string;
 }
