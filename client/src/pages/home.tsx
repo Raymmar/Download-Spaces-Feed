@@ -7,6 +7,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 import type { Webhook } from "@/types/webhook";
+import { useToast } from "@/hooks/use-toast";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Tweet } from "react-tweet";
@@ -16,6 +17,7 @@ dayjs.extend(relativeTime);
 
 export default function Home() {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
+  const { toast } = useToast();
 
   const { data, isLoading, refetch } = useQuery<Webhook[]>({
     queryKey: ["/api/webhooks"],
@@ -23,7 +25,6 @@ export default function Home() {
 
   useEffect(() => {
     if (data) {
-      // Limit to 200 most recent webhooks
       setWebhooks(data.slice(0, 200));
     }
   }, [data]);
@@ -47,6 +48,21 @@ export default function Home() {
       events.close();
     };
   }, [refetch]);
+
+  const handleCopyUrl = async (url: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({
+        description: "Playlist URL copied to clipboard",
+      });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        description: "Failed to copy URL to clipboard",
+      });
+    }
+  };
 
   // Extract tweet ID from URL
   const getTweetId = (url: string) => {
@@ -152,15 +168,6 @@ export default function Home() {
                           </Button>
                         )}
                       </div>
-                      {/* Twitter preview embed */}
-                      <div
-                        className={`w-full overflow-hidden rounded-lg ${getTweetId(webhook.tweetUrl) ? "" : "py-0"}`}
-                      >
-                        {getTweetId(webhook.tweetUrl) ? (
-                          <Tweet id={getTweetId(webhook.tweetUrl)} />
-                        ) : null}
-                      </div> 
-                      {/* SpaceName / title */}
                       <div className="border border-gray-200 rounded-lg mt-4 mb-4 p-4">
                         <span className="font-medium text-primary">
                           {webhook.spaceName}
@@ -172,15 +179,13 @@ export default function Home() {
                           <span className="font-mono break-all">{webhook.userId}</span>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          <span className="font-medium">Space URL:</span>{" "}
-                          <a 
-                            href={webhook.playlistUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline ml-1 font-mono break-words"
+                          <span className="font-medium">Playlist URL:</span>{" "}
+                          <button 
+                            onClick={(e) => handleCopyUrl(webhook.playlistUrl, e)}
+                            className="text-primary hover:underline ml-1 font-mono break-words text-left"
                           >
                             {webhook.playlistUrl}
-                          </a>
+                          </button>
                         </div>
                       </div>
                       <div className="flex flex-col pt-2 gap-1">
