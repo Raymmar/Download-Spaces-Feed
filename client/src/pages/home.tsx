@@ -128,7 +128,7 @@ export default function Home() {
                               : date.fromNow();
                           })()}
                         </span>
-                        {getTweetId(webhook.tweet_url) && (
+                        {getTweetId(webhook.tweetUrl) && (
                           <Button 
                             variant="outline"
                             asChild
@@ -136,7 +136,7 @@ export default function Home() {
                             className="gap-1 h-7 px-2 text-xs"
                           >
                             <a
-                              href={webhook.tweet_url}
+                              href={webhook.tweetUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                             >
@@ -163,7 +163,7 @@ export default function Home() {
                       {/* SpaceName / title */}
                       <div className="border border-gray-200 rounded-lg mt-4 mb-4 p-4">
                         <span className="font-medium text-primary">
-                          {webhook.space_name}
+                          {webhook.spaceName}
                         </span>
                       </div>
                       <div className="flex flex-col gap-2">
