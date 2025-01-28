@@ -140,13 +140,13 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-[600px_1fr]">
           <ScrollArea>
             {selectedUserId && (
-              <div className="pt-4 px-4">
+              <div className="pt-4 pr-4">
                 <Card>
                   <CardContent className="p-4 flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <p className="text-sm text-muted-foreground">
-                        Showing downloads for user:{" "}
-                        <span className="font-mono">{selectedUserId}</span>
+                        Downloads for user:{" "}
+                        <span className="font-mono font-bold">{selectedUserId}</span>
                       </p>
                     </div>
                     <Button
@@ -212,13 +212,13 @@ export default function Home() {
                         )}
                       </div>
                       <div className="border border-gray-200 rounded-lg mt-4 mb-4 p-4">
-                        <span className="font-medium text-primary">
+                        <span className="font-medium text-lg">
                           {webhook.spaceName}
                         </span>
                       </div>
                       <div className="flex flex-col gap-2">
                         <div className="text-sm text-muted-foreground">
-                          <span className="font-medium">User ID:</span>{" "}
+                          <span className="font-medium">Extension ID:</span>{" "}
                           <button
                             onClick={() => handleUserIdClick(webhook.userId)}
                             className="font-mono break-all text-primary hover:underline"
@@ -238,7 +238,7 @@ export default function Home() {
                       </div>
                       <div className="flex flex-col pt-2 gap-1">
                         <div>
-                          <p className="text-muted-foreground">
+                          <p className="text-sm text-muted-foreground">
                             Download from:
                           </p>
                           <p>{`${webhook.city}, ${webhook.country}`}</p>
