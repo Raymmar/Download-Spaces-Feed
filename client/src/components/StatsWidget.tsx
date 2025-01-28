@@ -269,7 +269,7 @@ export function StatsWidget() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">
-              {webhookCount?.toLocaleString('en-US') ?? "Loading..."}
+              {webhookCount?.toLocaleString() ?? "Loading..."}
             </div>
           </CardContent>
         </Card>
