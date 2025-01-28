@@ -6,13 +6,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
-import type { Webhook } from "@/types/webhook";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Tweet } from "react-tweet";
 import { StatsWidget } from "@/components/StatsWidget";
 
 dayjs.extend(relativeTime);
+
+export type Webhook = {
+  id: string;
+  spaceName: string;
+  tweetUrl: string;
+  city: string;
+  country: string;
+  createdAt: string;
+};
 
 export default function Home() {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
@@ -35,8 +43,6 @@ export default function Home() {
     events.onmessage = (event) => {
       const webhook = JSON.parse(event.data);
       setWebhooks((prev) => {
-        // Since backend handles uniqueness, we just need to prepend new webhook
-        // and maintain the maximum length
         return [webhook, ...prev.slice(0, 199)];
       });
     };
@@ -156,16 +162,18 @@ export default function Home() {
                         )}
                       </div>
                       <div
-                        className={`w-full overflow-hidden rounded-lg ${getTweetId(webhook.tweetUrl) ? "hidden" : "py-0"}`}
+                        className={`w-full overflow-hidden rounded-lg ${
+                          getTweetId(webhook.tweetUrl) ? "hidden" : "py-0"
+                        }`}
                       >
                         {getTweetId(webhook.tweetUrl) ? (
-                          <Tweet id={getTweetId(webhook.tweetUrl)} />
+                          <Tweet id={getTweetId(webhook.tweetUrl)} apiUrl="https://api.twitter.com" />
                         ) : null}
                       </div>
                       <div className="flex flex-col gap-1">
                         <div>
                           <p className="text-muted-foreground">Download from:</p>
-                          <p>{`${webhook.city}, ${webhook.region}, ${webhook.country}`}</p>
+                          <p>{`${webhook.city}, ${webhook.country}`}</p>
                         </div>
                       </div>
                     </CardContent>

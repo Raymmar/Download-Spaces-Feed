@@ -5,6 +5,13 @@ import { webhooks } from "@db/schema";
 import { desc, and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import express from "express";
+import rateLimit from 'express-rate-limit';
+
+// Create a rate limiter
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
 
 const webhookSchema = z.object({
   userId: z.string(),
@@ -17,40 +24,54 @@ const webhookSchema = z.object({
   country: z.string()
 });
 
+// Type for sanitized webhook data
+type SanitizedWebhook = {
+  id: string;
+  spaceName: string;
+  tweetUrl: string;
+  city: string;
+  country: string;
+  createdAt: Date;
+};
+
+// Function to sanitize webhook data
+function sanitizeWebhook(webhook: any): SanitizedWebhook {
+  return {
+    id: webhook.id,
+    spaceName: webhook.spaceName,
+    tweetUrl: webhook.tweetUrl,
+    city: webhook.city,
+    country: webhook.country,
+    createdAt: webhook.createdAt
+  };
+}
+
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   const clients = new Set<any>();
+
+  // Apply rate limiter to all routes
+  app.use(limiter);
 
   // Configure raw body parsing for webhooks
   app.use(express.raw({ type: 'application/json' }));
   app.use(express.text());
 
-  // Add CORS headers middleware for webhook endpoint and logging
+  // Add CORS headers middleware for webhook endpoint
   app.use((req, res, next) => {
-    const timestamp = new Date().toISOString();
-    console.log(`${timestamp} - Incoming ${req.method} request to ${req.path}`);
-    console.log('Request headers:', req.headers);
-    console.log('Raw body:', req.body);
-    console.log('Content type:', req.get('content-type'));
-
-    // More permissive CORS settings
     res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.header('Access-Control-Allow-Headers', '*');
-    res.header('Access-Control-Allow-Credentials', 'true');
 
     if (req.method === 'OPTIONS') {
-      console.log(`${timestamp} - Responding to OPTIONS request`);
       res.sendStatus(200);
     } else {
       next();
     }
   });
 
-  // Update webhook count endpoint to count unique entries
   app.get("/api/webhooks/count", async (_req, res) => {
     try {
-      // Use a subquery to get distinct combinations first
       const result = await db.select({
         count: sql<number>`COUNT(DISTINCT (${webhooks.tweetUrl}, ${webhooks.spaceName}, ${webhooks.ip}))`
       }).from(webhooks);
@@ -63,9 +84,6 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.post("/api/webhook", async (req, res) => {
-    const timestamp = new Date().toISOString();
-    console.log(`${timestamp} - Processing webhook request`);
-
     try {
       // Parse body based on content type
       let parsedBody;
@@ -77,20 +95,16 @@ export function registerRoutes(app: Express): Server {
         } else {
           parsedBody = req.body;
         }
-        console.log(`${timestamp} - Parsed webhook data:`, parsedBody);
       } catch (parseError) {
-        console.error(`${timestamp} - Body parsing failed:`, parseError);
         return res.status(400).json({ error: "Invalid JSON in request body" });
       }
 
       // Validate webhook data
       const validatedData = webhookSchema.parse(parsedBody);
-      console.log(`${timestamp} - Webhook data validated`);
 
       // Check for recent duplicates using the indexed fields
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-      // Get the most recent duplicate entry if it exists
       const existingEntry = await db.query.webhooks.findFirst({
         where: and(
           eq(webhooks.ip, validatedData.ip),
@@ -102,10 +116,9 @@ export function registerRoutes(app: Express): Server {
       });
 
       if (existingEntry) {
-        console.log(`${timestamp} - Duplicate webhook detected within 24 hours`);
         return res.status(200).json({
           message: "Duplicate webhook detected",
-          webhook: existingEntry
+          webhook: sanitizeWebhook(existingEntry)
         });
       }
 
@@ -114,15 +127,13 @@ export function registerRoutes(app: Express): Server {
         .values(validatedData)
         .returning();
 
-      console.log(`${timestamp} - New webhook stored successfully`);
-
-      // Notify connected clients
-      const eventData = `data: ${JSON.stringify(insertedWebhook)}\n\n`;
+      // Notify connected clients with sanitized data
+      const sanitizedWebhook = sanitizeWebhook(insertedWebhook);
+      const eventData = `data: ${JSON.stringify(sanitizedWebhook)}\n\n`;
       clients.forEach(client => client.write(eventData));
 
-      res.status(201).json(insertedWebhook);
+      res.status(201).json(sanitizedWebhook);
     } catch (error) {
-      console.error(`${timestamp} - Webhook processing error:`, error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       res.status(500).json({
         error: "Failed to process webhook",
@@ -133,7 +144,7 @@ export function registerRoutes(app: Express): Server {
 
   app.get("/api/webhooks", async (_req, res) => {
     try {
-      // Get the most recent 200 webhooks first
+      // Get the most recent 200 webhooks
       const recentWebhooks = await db.query.webhooks.findMany({
         orderBy: [desc(webhooks.createdAt)],
         limit: 200
@@ -148,7 +159,6 @@ export function registerRoutes(app: Express): Server {
         if (!uniqueMap.has(key)) {
           uniqueMap.set(key, webhook);
         } else {
-          // If this webhook is more recent than the stored one, update it
           const existing = uniqueMap.get(key)!;
           if (new Date(webhook.createdAt) > new Date(existing.createdAt)) {
             uniqueMap.set(key, webhook);
@@ -156,8 +166,9 @@ export function registerRoutes(app: Express): Server {
         }
       });
 
-      // Convert Map values back to array and sort by createdAt
+      // Convert Map values back to array, sanitize, and sort by createdAt
       const uniqueWebhooks = Array.from(uniqueMap.values())
+        .map(sanitizeWebhook)
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
       res.json(uniqueWebhooks);
@@ -168,18 +179,15 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/events", (req, res) => {
-    console.log("New client connected to SSE");
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
     res.setHeader("Access-Control-Allow-Origin", "*");
 
     clients.add(res);
-    console.log("Total SSE clients:", clients.size);
 
     req.on("close", () => {
       clients.delete(res);
-      console.log("Client disconnected from SSE. Remaining clients:", clients.size);
     });
   });
 
