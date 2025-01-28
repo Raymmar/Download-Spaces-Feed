@@ -105,12 +105,6 @@ export default function Home() {
             <h1 className="text-2xl font-bold">Download Twitter Spaces</h1>
           </div>
           <div className="flex gap-2">
-            {selectedUserId && (
-              <Button variant="outline" onClick={clearFilter}>
-                <X className="mr-2 h-4 w-4" />
-                Clear Filter
-              </Button>
-            )}
             <Link href="/docs">
               <Button variant="outline">
                 <FileText className="mr-2 h-4 w-4" />
@@ -142,10 +136,21 @@ export default function Home() {
             {selectedUserId && (
               <div className="pt-4 px-4">
                 <Card>
-                  <CardContent className="py-2 px-4">
-                    <p className="text-sm text-muted-foreground">
-                      Showing downloads for user: <span className="font-mono">{selectedUserId}</span>
-                    </p>
+                  <CardContent className="p-4 flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        Showing downloads for user:{" "}
+                        <span className="font-mono">{selectedUserId}</span>
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={clearFilter}
+                      className="h-8 w-8"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </CardContent>
                 </Card>
               </div>

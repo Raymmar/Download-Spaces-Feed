@@ -79,6 +79,44 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.get("/api/webhooks", async (req, res) => {
+    try {
+      const userId = req.query.userId as string | undefined;
+
+      // Get the most recent webhooks for the user if specified
+      const recentWebhooks = await db.query.webhooks.findMany({
+        where: userId ? eq(webhooks.userId, userId) : undefined,
+        orderBy: [desc(webhooks.createdAt)],
+        limit: 200,
+      });
+
+      // Create a Map to store unique entries, prioritizing most recent
+      const uniqueMap = new Map<string, typeof recentWebhooks[0]>();
+
+      // Process webhooks to ensure uniqueness
+      recentWebhooks.forEach((webhook) => {
+        if (userId && webhook.userId !== userId) {
+          return; // Skip if userId filter is active and webhook doesn't match
+        }
+
+        const key = `${webhook.ip}-${webhook.spaceName}-${webhook.tweetUrl}`;
+        if (!uniqueMap.has(key) || new Date(webhook.createdAt) > new Date(uniqueMap.get(key)!.createdAt)) {
+          uniqueMap.set(key, webhook);
+        }
+      });
+
+      // Convert Map values back to array and sort by createdAt
+      const uniqueWebhooks = Array.from(uniqueMap.values())
+        .map(sanitizeWebhook)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      res.json(uniqueWebhooks);
+    } catch (error) {
+      console.error("Error fetching webhooks:", error);
+      res.status(500).json({ error: "Failed to fetch webhooks" });
+    }
+  });
+
   app.post("/api/webhook", async (req, res) => {
     try {
       // Parse body based on content type
@@ -137,51 +175,6 @@ export function registerRoutes(app: Express): Server {
         error: "Failed to process webhook",
         message: errorMessage,
       });
-    }
-  });
-
-  app.get("/api/webhooks", async (req, res) => {
-    try {
-      const userId = req.query.userId as string | undefined;
-
-      // Build the where clause based on userId filter
-      const whereClause = userId ? eq(webhooks.userId, userId) : undefined;
-
-      // Get the most recent 200 webhooks
-      const recentWebhooks = await db.query.webhooks.findMany({
-        where: whereClause,
-        orderBy: [desc(webhooks.createdAt)],
-        limit: 200,
-      });
-
-      // Use a Map to keep track of unique combinations and their most recent entries
-      const uniqueMap = new Map<string, (typeof recentWebhooks)[0]>();
-
-      recentWebhooks.forEach((webhook) => {
-        const key = `${webhook.ip}-${webhook.spaceName}-${webhook.tweetUrl}`;
-
-        if (!uniqueMap.has(key)) {
-          uniqueMap.set(key, webhook);
-        } else {
-          const existing = uniqueMap.get(key)!;
-          if (new Date(webhook.createdAt) > new Date(existing.createdAt)) {
-            uniqueMap.set(key, webhook);
-          }
-        }
-      });
-
-      // Convert Map values back to array, sanitize, and sort by createdAt
-      const uniqueWebhooks = Array.from(uniqueMap.values())
-        .map(sanitizeWebhook)
-        .sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        );
-
-      res.json(uniqueWebhooks);
-    } catch (error) {
-      console.error("Error fetching webhooks:", error);
-      res.status(500).json({ error: "Failed to fetch webhooks" });
     }
   });
 
