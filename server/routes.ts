@@ -14,7 +14,7 @@ const webhookSchema = z.object({
   ip: z.string(),
   city: z.string(),
   region: z.string(),
-  country: z.string()
+  country: z.string(),
 });
 
 // Type for sanitized webhook data
@@ -35,7 +35,7 @@ function sanitizeWebhook(webhook: any): SanitizedWebhook {
     tweetUrl: webhook.tweetUrl,
     city: webhook.city,
     country: webhook.country,
-    createdAt: webhook.createdAt
+    createdAt: webhook.createdAt,
   };
 }
 
@@ -44,16 +44,16 @@ export function registerRoutes(app: Express): Server {
   const clients = new Set<any>();
 
   // Configure raw body parsing for webhooks
-  app.use(express.raw({ type: 'application/json' }));
+  app.use(express.raw({ type: "application/json" }));
   app.use(express.text());
 
   // Add CORS headers middleware for webhook endpoint
   app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.header('Access-Control-Allow-Headers', '*');
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "*");
 
-    if (req.method === 'OPTIONS') {
+    if (req.method === "OPTIONS") {
       res.sendStatus(200);
     } else {
       next();
@@ -62,9 +62,11 @@ export function registerRoutes(app: Express): Server {
 
   app.get("/api/webhooks/count", async (_req, res) => {
     try {
-      const result = await db.select({
-        count: sql<number>`COUNT(DISTINCT (${webhooks.tweetUrl}, ${webhooks.spaceName}, ${webhooks.ip}))`
-      }).from(webhooks);
+      const result = await db
+        .select({
+          count: sql<number>`COUNT(DISTINCT (${webhooks.tweetUrl}, ${webhooks.spaceName}, ${webhooks.ip}))`,
+        })
+        .from(webhooks);
 
       res.json(result[0].count);
     } catch (error) {
@@ -78,7 +80,7 @@ export function registerRoutes(app: Express): Server {
       // Parse body based on content type
       let parsedBody;
       try {
-        if (typeof req.body === 'string') {
+        if (typeof req.body === "string") {
           parsedBody = JSON.parse(req.body);
         } else if (Buffer.isBuffer(req.body)) {
           parsedBody = JSON.parse(req.body.toString());
@@ -100,34 +102,36 @@ export function registerRoutes(app: Express): Server {
           eq(webhooks.ip, validatedData.ip),
           eq(webhooks.spaceName, validatedData.spaceName),
           eq(webhooks.tweetUrl, validatedData.tweetUrl),
-          sql`${webhooks.createdAt} > ${twentyFourHoursAgo}`
+          sql`${webhooks.createdAt} > ${twentyFourHoursAgo}`,
         ),
-        orderBy: [desc(webhooks.createdAt)]
+        orderBy: [desc(webhooks.createdAt)],
       });
 
       if (existingEntry) {
         return res.status(200).json({
           message: "Duplicate webhook detected",
-          webhook: sanitizeWebhook(existingEntry)
+          webhook: sanitizeWebhook(existingEntry),
         });
       }
 
       // If no duplicate found, proceed with insertion
-      const [insertedWebhook] = await db.insert(webhooks)
+      const [insertedWebhook] = await db
+        .insert(webhooks)
         .values(validatedData)
         .returning();
 
       // Notify connected clients with sanitized data
       const sanitizedWebhook = sanitizeWebhook(insertedWebhook);
       const eventData = `data: ${JSON.stringify(sanitizedWebhook)}\n\n`;
-      clients.forEach(client => client.write(eventData));
+      clients.forEach((client) => client.write(eventData));
 
       res.status(201).json(sanitizedWebhook);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       res.status(500).json({
         error: "Failed to process webhook",
-        message: errorMessage
+        message: errorMessage,
       });
     }
   });
@@ -137,13 +141,13 @@ export function registerRoutes(app: Express): Server {
       // Get the most recent 200 webhooks
       const recentWebhooks = await db.query.webhooks.findMany({
         orderBy: [desc(webhooks.createdAt)],
-        limit: 200
+        limit: 200,
       });
 
       // Use a Map to keep track of unique combinations and their most recent entries
-      const uniqueMap = new Map<string, typeof recentWebhooks[0]>();
+      const uniqueMap = new Map<string, (typeof recentWebhooks)[0]>();
 
-      recentWebhooks.forEach(webhook => {
+      recentWebhooks.forEach((webhook) => {
         const key = `${webhook.ip}-${webhook.spaceName}-${webhook.tweetUrl}`;
 
         if (!uniqueMap.has(key)) {
@@ -159,7 +163,10 @@ export function registerRoutes(app: Express): Server {
       // Convert Map values back to array, sanitize, and sort by createdAt
       const uniqueWebhooks = Array.from(uniqueMap.values())
         .map(sanitizeWebhook)
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
 
       res.json(uniqueWebhooks);
     } catch (error) {

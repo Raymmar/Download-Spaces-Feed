@@ -6,21 +6,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
+import type { Webhook } from "@/types/webhook";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Tweet } from "react-tweet";
 import { StatsWidget } from "@/components/StatsWidget";
 
 dayjs.extend(relativeTime);
-
-export type Webhook = {
-  id: string;
-  spaceName: string;
-  tweetUrl: string;
-  city: string;
-  country: string;
-  createdAt: string;
-};
 
 export default function Home() {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
@@ -31,7 +23,8 @@ export default function Home() {
 
   useEffect(() => {
     if (data) {
-      setWebhooks(data);
+      // Limit to 200 most recent webhooks
+      setWebhooks(data.slice(0, 200));
     }
   }, [data]);
 
@@ -42,9 +35,7 @@ export default function Home() {
 
     events.onmessage = (event) => {
       const webhook = JSON.parse(event.data);
-      setWebhooks((prev) => {
-        return [webhook, ...prev.slice(0, 199)];
-      });
+      setWebhooks((prev) => [webhook, ...prev]);
     };
 
     events.onerror = (error) => {
@@ -60,7 +51,7 @@ export default function Home() {
   // Extract tweet ID from URL
   const getTweetId = (url: string) => {
     const matches = url.match(/status\/(\d+)/);
-    return matches ? matches[1] : undefined;
+    return matches ? matches[1] : null;
   };
 
   return (
@@ -138,11 +129,11 @@ export default function Home() {
                           })()}
                         </span>
                         {getTweetId(webhook.tweetUrl) && (
-                          <Button
+                          <Button 
                             variant="outline"
                             asChild
                             size="sm"
-                            className="gap-1 h-7 px-2 text-xs hidden"
+                            className="gap-1 h-7 px-2 text-xs"
                           >
                             <a
                               href={webhook.tweetUrl}
@@ -161,18 +152,25 @@ export default function Home() {
                           </Button>
                         )}
                       </div>
+                      {/* Twitter preview embed
                       <div
-                        className={`w-full overflow-hidden rounded-lg ${
-                          getTweetId(webhook.tweetUrl) ? "hidden" : "py-0"
-                        }`}
+                        className={`w-full overflow-hidden rounded-lg ${getTweetId(webhook.tweetUrl) ? "hidden" : "py-0"}`}
                       >
                         {getTweetId(webhook.tweetUrl) ? (
-                          <Tweet id={getTweetId(webhook.tweetUrl)} apiUrl="https://api.twitter.com" />
+                          <Tweet id={getTweetId(webhook.tweetUrl)} />
                         ) : null}
-                      </div>
-                      <div className="flex flex-col gap-1">
+                      </div> 
+                      {/* SpaceName / title
+                      <div className="border border-gray-200 rounded-lg mt-4 mb-4 p-4">
+                        <span className="font-medium text-primary">
+                          {webhook.spaceName}
+                        </span>
+                      </div> */}
+                      <div className="flex flex-col pt-2 gap-1">
                         <div>
-                          <p className="text-muted-foreground">Download from:</p>
+                          <p className="text-muted-foreground">
+                            Download from:
+                          </p>
                           <p>{`${webhook.city}, ${webhook.country}`}</p>
                         </div>
                       </div>

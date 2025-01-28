@@ -1,5 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { useQuery } from "@tanstack/react-query";
 
 // Parse CSV data
@@ -182,7 +189,7 @@ const csvData = `Date,Weekly users
 1/23/25,3030
 1/24/25,3028
 1/25/25,3059
-1/26/25,3070`;
+1/26/25,3087`;
 
 type ChartDataPoint = {
   date: string;
@@ -191,17 +198,17 @@ type ChartDataPoint = {
 
 // Parse CSV data into chart format
 const chartData: ChartDataPoint[] = csvData
-  .split('\n')
+  .split("\n")
   .slice(1)
   .map((line: string) => {
-    const [date, users] = line.split(',');
+    const [date, users] = line.split(",");
     const parsedDate = new Date(date);
     return {
-      date: parsedDate.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric'
+      date: parsedDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
       }),
-      users: parseInt(users) || 0
+      users: parseInt(users) || 0,
     };
   })
   .filter((data: ChartDataPoint) => data.users > 0);
@@ -221,16 +228,16 @@ export function StatsWidget() {
           <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
-                <XAxis 
-                  dataKey="date" 
+                <XAxis
+                  dataKey="date"
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
                   interval="preserveStartEnd"
                   minTickGap={30}
-                  tickFormatter={(value) => value.split(' ')[0]}
+                  tickFormatter={(value) => value.split(" ")[0]}
                 />
-                <YAxis 
+                <YAxis
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
@@ -254,7 +261,9 @@ export function StatsWidget() {
       <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Active Installs</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Active Installs
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">
@@ -265,11 +274,13 @@ export function StatsWidget() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Spaces Downloaded</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Spaces Downloaded
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">
-              {Number(webhookCount).toLocaleString('en-US') ?? "Loading..."}
+              {Number(webhookCount).toLocaleString("en-US") ?? "Loading..."}
             </div>
           </CardContent>
         </Card>
