@@ -254,7 +254,7 @@ export function StatsWidget() {
       <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Current Active Installs</CardTitle>
+            <CardTitle className="text-sm font-medium">Active Installs</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">
@@ -265,7 +265,7 @@ export function StatsWidget() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Total Spaces Downloaded</CardTitle>
+            <CardTitle className="text-sm font-medium">Spaces Downloaded</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">
