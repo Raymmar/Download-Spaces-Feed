@@ -83,7 +83,7 @@ export function registerRoutes(app: Express): Server {
     try {
       const userId = req.query.userId as string | undefined;
 
-      // Get the most recent webhooks for the user if specified
+      // Get webhooks filtered by userId if specified
       const recentWebhooks = await db.query.webhooks.findMany({
         where: userId ? eq(webhooks.userId, userId) : undefined,
         orderBy: [desc(webhooks.createdAt)],
@@ -95,10 +95,6 @@ export function registerRoutes(app: Express): Server {
 
       // Process webhooks to ensure uniqueness
       recentWebhooks.forEach((webhook) => {
-        if (userId && webhook.userId !== userId) {
-          return; // Skip if userId filter is active and webhook doesn't match
-        }
-
         const key = `${webhook.ip}-${webhook.spaceName}-${webhook.tweetUrl}`;
         if (!uniqueMap.has(key) || new Date(webhook.createdAt) > new Date(uniqueMap.get(key)!.createdAt)) {
           uniqueMap.set(key, webhook);
