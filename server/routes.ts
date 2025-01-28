@@ -140,10 +140,16 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/webhooks", async (_req, res) => {
+  app.get("/api/webhooks", async (req, res) => {
     try {
+      const userId = req.query.userId as string | undefined;
+
+      // Build the where clause based on userId filter
+      const whereClause = userId ? eq(webhooks.userId, userId) : undefined;
+
       // Get the most recent 200 webhooks
       const recentWebhooks = await db.query.webhooks.findMany({
+        where: whereClause,
         orderBy: [desc(webhooks.createdAt)],
         limit: 200,
       });

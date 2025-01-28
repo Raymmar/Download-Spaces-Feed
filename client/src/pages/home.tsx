@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { FileText } from "lucide-react";
+import { FileText, X } from "lucide-react";
 import type { Webhook } from "@/types/webhook";
 import { useToast } from "@/hooks/use-toast";
 import dayjs from "dayjs";
@@ -17,10 +17,11 @@ dayjs.extend(relativeTime);
 
 export default function Home() {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { data, isLoading, refetch } = useQuery<Webhook[]>({
-    queryKey: ["/api/webhooks"],
+    queryKey: ["/api/webhooks", selectedUserId ? `?userId=${selectedUserId}` : ""],
   });
 
   useEffect(() => {
@@ -36,7 +37,13 @@ export default function Home() {
 
     events.onmessage = (event) => {
       const webhook = JSON.parse(event.data);
-      setWebhooks((prev) => [webhook, ...prev]);
+      setWebhooks((prev) => {
+        // Only add new webhook if it matches the current filter or no filter is applied
+        if (!selectedUserId || webhook.userId === selectedUserId) {
+          return [webhook, ...prev];
+        }
+        return prev;
+      });
     };
 
     events.onerror = (error) => {
@@ -47,7 +54,7 @@ export default function Home() {
     return () => {
       events.close();
     };
-  }, [refetch]);
+  }, [refetch, selectedUserId]);
 
   const handleCopyUrl = async (url: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -62,6 +69,14 @@ export default function Home() {
         description: "Failed to copy URL to clipboard",
       });
     }
+  };
+
+  const handleUserIdClick = (userId: string) => {
+    setSelectedUserId(userId);
+  };
+
+  const clearFilter = () => {
+    setSelectedUserId(null);
   };
 
   // Extract tweet ID from URL
@@ -90,6 +105,12 @@ export default function Home() {
             <h1 className="text-2xl font-bold">Download Twitter Spaces</h1>
           </div>
           <div className="flex gap-2">
+            {selectedUserId && (
+              <Button variant="outline" onClick={clearFilter}>
+                <X className="mr-2 h-4 w-4" />
+                Clear Filter
+              </Button>
+            )}
             <Link href="/docs">
               <Button variant="outline">
                 <FileText className="mr-2 h-4 w-4" />
@@ -118,6 +139,17 @@ export default function Home() {
       <div className="max-w-[1200px] mx-auto mt-[72px] px-4">
         <div className="grid grid-cols-1 lg:grid-cols-[600px_1fr]">
           <ScrollArea>
+            {selectedUserId && (
+              <div className="pt-4 px-4">
+                <Card>
+                  <CardContent className="py-2 px-4">
+                    <p className="text-sm text-muted-foreground">
+                      Showing downloads for user: <span className="font-mono">{selectedUserId}</span>
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
             {isLoading ? (
               <div className="space-y-4 p-4">
                 {[...Array(5)].map((_, i) => (
@@ -176,7 +208,12 @@ export default function Home() {
                       <div className="flex flex-col gap-2">
                         <div className="text-sm text-muted-foreground">
                           <span className="font-medium">User ID:</span>{" "}
-                          <span className="font-mono break-all">{webhook.userId}</span>
+                          <button
+                            onClick={() => handleUserIdClick(webhook.userId)}
+                            className="font-mono break-all text-primary hover:underline"
+                          >
+                            {webhook.userId}
+                          </button>
                         </div>
                         <div className="text-sm text-muted-foreground">
                           <span className="font-medium">Playlist URL:</span>{" "}
