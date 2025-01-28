@@ -133,40 +133,34 @@ export function registerRoutes(app: Express): Server {
 
   app.get("/api/webhooks", async (_req, res) => {
     try {
-      // Get the most recent unique webhooks using a similar approach to the count endpoint
-      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      // Get the most recent 200 webhooks first
+      const recentWebhooks = await db.query.webhooks.findMany({
+        orderBy: [desc(webhooks.createdAt)],
+        limit: 200
+      });
 
-      // First, get the distinct combinations with their latest timestamp
-      const distinctWebhooks = await db
-        .select({
-          tweetUrl: webhooks.tweetUrl,
-          spaceName: webhooks.spaceName,
-          ip: webhooks.ip,
-          maxCreatedAt: sql<Date>`MAX(${webhooks.createdAt})`
-        })
-        .from(webhooks)
-        .where(sql`${webhooks.createdAt} > ${twentyFourHoursAgo}`)
-        .groupBy(webhooks.tweetUrl, webhooks.spaceName, webhooks.ip)
-        .orderBy(sql`MAX(${webhooks.createdAt}) DESC`)
-        .limit(200);
+      // Use a Map to keep track of unique combinations and their most recent entries
+      const uniqueMap = new Map<string, typeof recentWebhooks[0]>();
 
-      // Then get the full webhook details for these distinct combinations
-      const uniqueWebhooks = await Promise.all(
-        distinctWebhooks.map(async (distinct) => {
-          const webhook = await db.query.webhooks.findFirst({
-            where: and(
-              eq(webhooks.tweetUrl, distinct.tweetUrl),
-              eq(webhooks.spaceName, distinct.spaceName),
-              eq(webhooks.ip, distinct.ip),
-              eq(webhooks.createdAt, distinct.maxCreatedAt)
-            )
-          });
-          return webhook;
-        })
-      );
+      recentWebhooks.forEach(webhook => {
+        const key = `${webhook.ip}-${webhook.spaceName}-${webhook.tweetUrl}`;
 
-      // Filter out any null values and send response
-      res.json(uniqueWebhooks.filter(Boolean));
+        if (!uniqueMap.has(key)) {
+          uniqueMap.set(key, webhook);
+        } else {
+          // If this webhook is more recent than the stored one, update it
+          const existing = uniqueMap.get(key)!;
+          if (new Date(webhook.createdAt) > new Date(existing.createdAt)) {
+            uniqueMap.set(key, webhook);
+          }
+        }
+      });
+
+      // Convert Map values back to array and sort by createdAt
+      const uniqueWebhooks = Array.from(uniqueMap.values())
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      res.json(uniqueWebhooks);
     } catch (error) {
       console.error("Error fetching webhooks:", error);
       res.status(500).json({ error: "Failed to fetch webhooks" });
