@@ -20,6 +20,8 @@ const webhookSchema = z.object({
 // Type for sanitized webhook data
 type SanitizedWebhook = {
   id: string;
+  userId: string;
+  playlistUrl: string;
   spaceName: string;
   tweetUrl: string;
   city: string;
@@ -31,6 +33,8 @@ type SanitizedWebhook = {
 function sanitizeWebhook(webhook: any): SanitizedWebhook {
   return {
     id: webhook.id,
+    userId: webhook.userId,
+    playlistUrl: webhook.playlistUrl,
     spaceName: webhook.spaceName,
     tweetUrl: webhook.tweetUrl,
     city: webhook.city,
