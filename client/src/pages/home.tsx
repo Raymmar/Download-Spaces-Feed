@@ -114,7 +114,7 @@ export default function Home() {
             </svg>
             <h1 className="text-2xl font-bold whitespace-nowrap">Download Twitter Spaces</h1>
           </div>
-          <div className="flex gap-2 flex-col sm:flex-row w-full sm:w-auto items-center">
+          <div className="flex gap-2 w-full sm:w-auto items-center justify-center">
             <Link href="/docs">
               <Button variant="outline">
                 <FileText className="mr-2 h-4 w-4" />
