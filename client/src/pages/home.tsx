@@ -257,8 +257,8 @@ export default function Home() {
               </div>
             )}
           </ScrollArea>
-          <div className="hidden lg:block">
-            <div className="sticky top-[88px]">
+          <div>
+            <div className="lg:sticky lg:top-[88px]">
               <StatsWidget />
             </div>
           </div>
