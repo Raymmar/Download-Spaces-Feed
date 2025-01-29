@@ -21,7 +21,10 @@ export default function Home() {
   const { toast } = useToast();
 
   const { data, isLoading, refetch } = useQuery<Webhook[]>({
-    queryKey: ["/api/webhooks", selectedUserId ? `?userId=${selectedUserId}` : ""],
+    queryKey: [
+      "/api/webhooks",
+      selectedUserId ? `?userId=${selectedUserId}` : "",
+    ],
   });
 
   // Update webhooks when data changes or filter changes
@@ -29,7 +32,7 @@ export default function Home() {
     if (data) {
       // If we have a selectedUserId, only include matching webhooks
       const filteredWebhooks = selectedUserId
-        ? data.filter(webhook => webhook.userId === selectedUserId)
+        ? data.filter((webhook) => webhook.userId === selectedUserId)
         : data;
       setWebhooks(filteredWebhooks.slice(0, 200));
     }
@@ -146,7 +149,9 @@ export default function Home() {
                     <div className="flex items-center gap-2">
                       <p className="text-sm text-muted-foreground">
                         Extension history:{" "}
-                        <span className="font-mono font-bold">{selectedUserId}</span>
+                        <span className="font-mono font-bold">
+                          {selectedUserId}
+                        </span>
                       </p>
                     </div>
                     <Button
@@ -229,7 +234,9 @@ export default function Home() {
                         <div className="text-sm text-muted-foreground">
                           <span className="font-medium">Playlist URL:</span>{" "}
                           <button
-                            onClick={(e) => handleCopyUrl(webhook.playlistUrl, e)}
+                            onClick={(e) =>
+                              handleCopyUrl(webhook.playlistUrl, e)
+                            }
                             className="text-primary hover:underline ml-1 font-mono break-words text-left w-full"
                           >
                             {webhook.playlistUrl}

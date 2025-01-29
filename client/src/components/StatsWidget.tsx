@@ -289,9 +289,6 @@ export function StatsWidget() {
 
       <Card className="mt-4">
         <CardContent className="p-6">
-          <h2 className="text-2xl font-bold mb-6">
-            Download Twitter Spaces Activity Feed
-          </h2>
           <p className="text-muted-foreground mb-4">
             This website displays a live activity feed of users downloading
             content with the{" "}
