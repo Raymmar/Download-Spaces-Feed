@@ -140,7 +140,7 @@ export default function Home() {
         </div>
       </nav>
       <div className="max-w-[1200px] mx-auto mt-[120px] sm:mt-[72px] px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-[600px_1fr]">
+        <div className="grid grid-cols-1 lg:grid-cols-[600px_1fr] lg:[&>*:last-child]:order-none [&>*:last-child]:order-first">
           <ScrollArea>
             {selectedUserId && (
               <div className="pt-4 pr-4">
