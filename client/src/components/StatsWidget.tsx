@@ -11,9 +11,8 @@ import {
 import { useQuery } from "@tanstack/react-query";
 
 // Parse CSV data
-const csvData = `Date,Weekly users
-8/1/24,0
-8/2/24,0
+const csvData = `
+Date,Weekly users
 8/3/24,0
 8/4/24,0
 8/5/24,0
@@ -190,7 +189,10 @@ const csvData = `Date,Weekly users
 1/23/25,3030
 1/24/25,3028
 1/25/25,3059
-1/26/25,3087`;
+1/26/25,3070
+1/27/25,3098
+1/28/25,3121
+`;
 
 type ChartDataPoint = {
   date: string;
@@ -221,6 +223,27 @@ export function StatsWidget() {
 
   return (
     <div className="space-y-4">
+      <Card className="mt-4">
+        <CardContent className="p-6">
+          <p className="text-muted-foreground">
+            This website displays a live activity feed from the{" "}
+            <a href="https://chromewebstore.google.com/detail/download-twitter-spaces/hjgpigfbmdlajibmebhndhjiiohodgfi">
+              Download Twitter Spaces{" "}
+            </a>{" "}
+            Chrome Extension.
+          </p>
+          {/* <Button variant="default">
+            <svg
+              className="mr-2 h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29zm13.342 2.166a5.446 5.446 0 0 1 1.45 7.09l.002.003h-.002l-5.344 9.257c.206.01.413.016.621.016 6.627 0 12-5.373 12-12 0-1.54-.29-3.011-.818-4.366zM12 16.364a4.364 4.364 0 1 1 0-8.728 4.364 4.364 0 0 1 0 8.728Z" />
+            </svg>
+            Install Extension
+          </Button> */}
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle className="text-sm font-medium">Active Users</CardTitle>
@@ -286,29 +309,6 @@ export function StatsWidget() {
           </CardContent>
         </Card>
       </div>
-
-      <Card className="mt-4">
-        <CardContent className="p-6">
-          <p className="text-muted-foreground mb-4">
-            This website displays a live activity feed of users downloading
-            content with the{" "}
-            <a href="https://chromewebstore.google.com/detail/download-twitter-spaces/hjgpigfbmdlajibmebhndhjiiohodgfi">
-              Download Twitter Spaces{" "}
-            </a>{" "}
-            Chrome Extension.
-          </p>
-          <Button variant="default">
-            <svg
-              className="mr-2 h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29zm13.342 2.166a5.446 5.446 0 0 1 1.45 7.09l.002.003h-.002l-5.344 9.257c.206.01.413.016.621.016 6.627 0 12-5.373 12-12 0-1.54-.29-3.011-.818-4.366zM12 16.364a4.364 4.364 0 1 1 0-8.728 4.364 4.364 0 0 1 0 8.728Z" />
-            </svg>
-            Install Extension
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   );
 }

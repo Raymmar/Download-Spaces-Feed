@@ -114,12 +114,12 @@ export default function Home() {
             <h1 className="text-2xl font-bold whitespace-nowrap">Download Twitter Spaces</h1>
           </div>
           <div className="flex gap-2 w-full sm:w-auto items-center justify-center">
-            <Link href="/docs">
+            <a href="https://raymmar.com" target="_blank">
               <Button variant="outline">
-                <FileText className="mr-2 h-4 w-4" />
-                What is this?
+                {/* <FileText className="mr-2 h-4 w-4" /> */}
+                By Raymmar
               </Button>
-            </Link>
+            </a>
             <a
               href="https://chromewebstore.google.com/detail/download-twitter-spaces/hjgpigfbmdlajibmebhndhjiiohodgfi"
               target="_blank"
@@ -148,7 +148,7 @@ export default function Home() {
                   <CardContent className="p-4 flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <p className="text-sm text-muted-foreground">
-                        Extension history:{" "}
+                        EID history for:{" "}
                         <span className="font-mono font-bold">
                           {selectedUserId}
                         </span>
@@ -211,19 +211,19 @@ export default function Home() {
                               >
                                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                               </svg>
-                              View on X
+                              View
                             </a>
                           </Button>
                         )}
                       </div>
-                      <div className="border border-gray-200 rounded-lg mt-4 mb-4 p-4">
+                      <div className="border hidden border-gray-200 rounded-lg mt-4 mb-4 p-4">
                         <span className="font-medium text-lg">
                           {webhook.spaceName}
                         </span>
                       </div>
                       <div className="flex flex-col gap-2">
                         <div className="text-sm text-muted-foreground">
-                          <span className="font-medium">Extension ID:</span>{" "}
+                          <span className="font-medium">EID:</span>{" "}
                           <button
                             onClick={() => handleUserIdClick(webhook.userId)}
                             className="font-mono break-all text-primary hover:underline"
