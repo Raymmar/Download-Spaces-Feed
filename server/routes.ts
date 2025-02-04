@@ -53,7 +53,7 @@ export function registerRoutes(app: Express): Server {
 
   // Add CORS headers middleware for webhook endpoint
   app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Origin", "https://download-spaces.replit.app");
     res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.header("Access-Control-Allow-Headers", "*");
 
