@@ -56,9 +56,10 @@ export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   const clients = new Set<any>();
 
-  // Configure raw body parsing for webhooks
-  app.use(express.raw({ type: "application/json" }));
+  // Configure body parsing for webhooks - more flexible configuration
+  app.use(express.json({ verify: (req: any, res, buf) => { req.rawBody = buf; } }));
   app.use(express.text());
+  app.use(express.raw({ type: '*/*' }));
 
   // Add CORS headers middleware for webhook endpoint
   app.use((req, res, next) => {
@@ -146,7 +147,7 @@ export function registerRoutes(app: Express): Server {
       origin: req.headers['origin'],
       host: req.headers['host'],
       userAgent: req.headers['user-agent'],
-      rawBody: typeof req.body === 'string' ? req.body : (Buffer.isBuffer(req.body) ? req.body.toString() : JSON.stringify(req.body))
+      rawBody: req.rawBody ? req.rawBody.toString() : typeof req.body === 'string' ? req.body : (Buffer.isBuffer(req.body) ? req.body.toString() : JSON.stringify(req.body))
     });
 
     try {
