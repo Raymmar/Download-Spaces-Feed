@@ -1,7 +1,8 @@
 export interface Webhook {
   id: string;
   userId: string;
-  playlistUrl: string;
+  mediaUrl: string;
+  mediaType: string;
   spaceName: string;
   tweetUrl: string;
   ip: string;

@@ -70,7 +70,7 @@ export default function Home() {
     try {
       await navigator.clipboard.writeText(url);
       toast({
-        description: "Playlist URL copied to clipboard",
+        description: "Media URL copied to clipboard",
       });
     } catch (err) {
       toast({
@@ -216,12 +216,15 @@ export default function Home() {
                           </Button>
                         )}
                       </div>
-                      <div className="border hidden border-gray-200 rounded-lg mt-4 mb-4 p-4">
-                        <span className="font-medium text-lg">
-                          {webhook.spaceName}
-                        </span>
-                      </div>
                       <div className="flex flex-col gap-2">
+                        <div className="text-sm text-muted-foreground">
+                          <span className="font-medium">Space Name:</span>{" "}
+                          <span className="break-all">{webhook.spaceName}</span>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          <span className="font-medium">Media Type:</span>{" "}
+                          <span className="break-all">{webhook.mediaType}</span>
+                        </div>
                         <div className="text-sm text-muted-foreground">
                           <span className="font-medium">EID:</span>{" "}
                           <button
@@ -232,14 +235,14 @@ export default function Home() {
                           </button>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          <span className="font-medium">Playlist URL:</span>{" "}
+                          <span className="font-medium">Media URL:</span>{" "}
                           <button
                             onClick={(e) =>
-                              handleCopyUrl(webhook.playlistUrl, e)
+                              handleCopyUrl(webhook.mediaUrl, e)
                             }
                             className="text-primary hover:underline ml-1 font-mono break-words text-left w-full"
                           >
-                            {webhook.playlistUrl}
+                            {webhook.mediaUrl}
                           </button>
                         </div>
                       </div>

@@ -4,7 +4,8 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 export const webhooks = pgTable("webhooks", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: text("user_id").notNull(),
-  playlistUrl: text("playlist_url").notNull(),
+  mediaUrl: text("media_url").notNull(),
+  mediaType: text("media_type").notNull(),
   spaceName: text("space_name").notNull(),
   tweetUrl: text("tweet_url").notNull(),
   ip: text("ip").notNull(),

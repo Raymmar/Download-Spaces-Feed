@@ -8,9 +8,10 @@ import express from "express";
 
 const webhookSchema = z.object({
   userId: z.string(),
-  playlistUrl: z.string().url(),
+  mediaUrl: z.string().url(),
+  mediaType: z.string(),
   spaceName: z.string(),
-  tweetUrl: z.string().url(),
+  tweetUrl: z.string(),
   ip: z.string(),
   city: z.string(),
   region: z.string(),
@@ -21,7 +22,8 @@ const webhookSchema = z.object({
 type SanitizedWebhook = {
   id: string;
   userId: string;
-  playlistUrl: string;
+  mediaUrl: string;
+  mediaType: string;
   spaceName: string;
   tweetUrl: string;
   city: string;
@@ -34,7 +36,8 @@ function sanitizeWebhook(webhook: any): SanitizedWebhook {
   return {
     id: webhook.id,
     userId: webhook.userId,
-    playlistUrl: webhook.playlistUrl,
+    mediaUrl: webhook.mediaUrl,
+    mediaType: webhook.mediaType,
     spaceName: webhook.spaceName,
     tweetUrl: webhook.tweetUrl,
     city: webhook.city,
