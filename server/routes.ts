@@ -6,7 +6,7 @@ import { desc, and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import express from "express";
 
-const webhookSchema = z.object({
+const webhookItemSchema = z.object({
   userId: z.string(),
   mediaUrl: z.string().url(),
   mediaType: z.string(),
@@ -17,6 +17,12 @@ const webhookSchema = z.object({
   region: z.string(),
   country: z.string(),
 });
+
+// Schema that accepts either a single webhook or an array of webhooks
+const webhookSchema = z.union([
+  webhookItemSchema,
+  z.array(webhookItemSchema)
+]);
 
 // Type for sanitized webhook data
 type SanitizedWebhook = {
@@ -151,9 +157,10 @@ export function registerRoutes(app: Express): Server {
           parsedBody = req.body;
         }
         console.log("[Webhook] Successfully parsed request body:", {
-          userId: parsedBody.userId,
-          spaceName: parsedBody.spaceName,
-          tweetUrl: parsedBody.tweetUrl
+          count: Array.isArray(parsedBody) ? parsedBody.length : 1,
+          sample: Array.isArray(parsedBody) ? 
+            { userId: parsedBody[0]?.userId, spaceName: parsedBody[0]?.spaceName } :
+            { userId: parsedBody?.userId, spaceName: parsedBody?.spaceName }
         });
       } catch (parseError) {
         console.error("[Webhook] Failed to parse request body:", parseError);
@@ -168,41 +175,53 @@ export function registerRoutes(app: Express): Server {
       const validatedData = webhookSchema.parse(parsedBody);
       console.log("[Webhook] Data validation successful");
 
-      // Check for recent duplicates using the indexed fields
-      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      // Convert to array if single object
+      const webhooksToProcess = Array.isArray(validatedData) ? validatedData : [validatedData];
+      const results = [];
 
-      const existingEntry = await db.query.webhooks.findFirst({
-        where: and(
-          eq(webhooks.ip, validatedData.ip),
-          eq(webhooks.spaceName, validatedData.spaceName),
-          eq(webhooks.tweetUrl, validatedData.tweetUrl),
-          sql`${webhooks.createdAt} > ${twentyFourHoursAgo}`,
-        ),
-        orderBy: [desc(webhooks.createdAt)],
-      });
+      for (const webhookData of webhooksToProcess) {
+        // Check for recent duplicates using the indexed fields
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-      if (existingEntry) {
-        console.log("[Webhook] Duplicate webhook detected");
-        return res.status(200).json({
-          message: "Duplicate webhook detected",
-          webhook: sanitizeWebhook(existingEntry),
+        const existingEntry = await db.query.webhooks.findFirst({
+          where: and(
+            eq(webhooks.ip, webhookData.ip),
+            eq(webhooks.spaceName, webhookData.spaceName),
+            eq(webhooks.tweetUrl, webhookData.tweetUrl),
+            sql`${webhooks.createdAt} > ${twentyFourHoursAgo}`,
+          ),
+          orderBy: [desc(webhooks.createdAt)],
+        });
+
+        if (existingEntry) {
+          console.log("[Webhook] Duplicate webhook detected");
+          results.push({
+            status: "duplicate",
+            webhook: sanitizeWebhook(existingEntry),
+          });
+          continue;
+        }
+
+        // If no duplicate found, proceed with insertion
+        const [insertedWebhook] = await db
+          .insert(webhooks)
+          .values(webhookData)
+          .returning();
+
+        console.log("[Webhook] Successfully inserted new webhook");
+
+        // Notify connected clients with sanitized data
+        const sanitizedWebhook = sanitizeWebhook(insertedWebhook);
+        const eventData = `data: ${JSON.stringify(sanitizedWebhook)}\n\n`;
+        clients.forEach((client) => client.write(eventData));
+
+        results.push({
+          status: "created",
+          webhook: sanitizedWebhook,
         });
       }
 
-      // If no duplicate found, proceed with insertion
-      const [insertedWebhook] = await db
-        .insert(webhooks)
-        .values(validatedData)
-        .returning();
-
-      console.log("[Webhook] Successfully inserted new webhook");
-
-      // Notify connected clients with sanitized data
-      const sanitizedWebhook = sanitizeWebhook(insertedWebhook);
-      const eventData = `data: ${JSON.stringify(sanitizedWebhook)}\n\n`;
-      clients.forEach((client) => client.write(eventData));
-
-      res.status(201).json(sanitizedWebhook);
+      res.status(201).json(results);
     } catch (error) {
       console.error("[Webhook] Error processing webhook:", error);
       const errorMessage =
