@@ -139,10 +139,14 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/webhook", async (req, res) => {
     console.log("[Webhook] Received incoming webhook request", {
+      url: req.url,
+      method: req.method,
       contentType: req.headers['content-type'],
       contentLength: req.headers['content-length'],
       origin: req.headers['origin'],
-      method: req.method
+      host: req.headers['host'],
+      userAgent: req.headers['user-agent'],
+      rawBody: typeof req.body === 'string' ? req.body : (Buffer.isBuffer(req.body) ? req.body.toString() : JSON.stringify(req.body))
     });
 
     try {
@@ -163,7 +167,9 @@ export function registerRoutes(app: Express): Server {
             { userId: parsedBody?.userId, spaceName: parsedBody?.spaceName }
         });
       } catch (parseError) {
-        console.error("[Webhook] Failed to parse request body:", parseError);
+        console.error("[Webhook] Failed to parse request body:", parseError, {
+          receivedBody: typeof req.body === 'string' ? req.body : (Buffer.isBuffer(req.body) ? req.body.toString() : JSON.stringify(req.body))
+        });
         return res.status(400).json({ 
           error: "Invalid JSON in request body",
           details: (parseError as Error).message,
@@ -172,8 +178,20 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Validate webhook data
-      const validatedData = webhookSchema.parse(parsedBody);
-      console.log("[Webhook] Data validation successful");
+      let validatedData;
+      try {
+        validatedData = webhookSchema.parse(parsedBody);
+        console.log("[Webhook] Data validation successful", {
+          isArray: Array.isArray(validatedData),
+          count: Array.isArray(validatedData) ? validatedData.length : 1
+        });
+      } catch (validationError) {
+        console.error("[Webhook] Schema validation failed:", validationError);
+        return res.status(400).json({
+          error: "Invalid webhook data structure",
+          details: (validationError as Error).message
+        });
+      }
 
       // Convert to array if single object
       const webhooksToProcess = Array.isArray(validatedData) ? validatedData : [validatedData];
@@ -194,7 +212,11 @@ export function registerRoutes(app: Express): Server {
         });
 
         if (existingEntry) {
-          console.log("[Webhook] Duplicate webhook detected");
+          console.log("[Webhook] Duplicate webhook detected", {
+            ip: webhookData.ip,
+            spaceName: webhookData.spaceName,
+            tweetUrl: webhookData.tweetUrl
+          });
           results.push({
             status: "duplicate",
             webhook: sanitizeWebhook(existingEntry),
@@ -208,7 +230,11 @@ export function registerRoutes(app: Express): Server {
           .values(webhookData)
           .returning();
 
-        console.log("[Webhook] Successfully inserted new webhook");
+        console.log("[Webhook] Successfully inserted new webhook", {
+          id: insertedWebhook.id,
+          userId: insertedWebhook.userId,
+          spaceName: insertedWebhook.spaceName
+        });
 
         // Notify connected clients with sanitized data
         const sanitizedWebhook = sanitizeWebhook(insertedWebhook);
