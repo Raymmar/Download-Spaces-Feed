@@ -9,6 +9,52 @@ app.use(express.urlencoded({ extended: false }));
 // Trust proxy settings for proper IP handling behind reverse proxy
 app.set("trust proxy", true);
 
+// Add detailed request logging middleware at the top level
+app.use((req, res, next) => {
+  const start = Date.now();
+  const path = req.path;
+  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+
+  // Log all incoming requests immediately
+  const timestamp = new Date().toISOString();
+  log(`${timestamp} Request received:`, {
+    method: req.method,
+    path: req.path,
+    query: req.query,
+    headers: {
+      'content-type': req.headers['content-type'],
+      'content-length': req.headers['content-length'],
+      'origin': req.headers['origin'],
+      'host': req.headers['host'],
+      'user-agent': req.headers['user-agent']
+    }
+  });
+
+  const originalResJson = res.json;
+  res.json = function (bodyJson, ...args) {
+    capturedJsonResponse = bodyJson;
+    return originalResJson.apply(res, [bodyJson, ...args]);
+  };
+
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    if (path.startsWith("/api")) {
+      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+      if (capturedJsonResponse) {
+        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+      }
+
+      if (logLine.length > 80) {
+        logLine = logLine.slice(0, 79) + "…";
+      }
+
+      log(logLine);
+    }
+  });
+
+  next();
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;

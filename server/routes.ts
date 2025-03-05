@@ -63,30 +63,26 @@ export function registerRoutes(app: Express): Server {
 
   // Add CORS headers middleware for webhook endpoint
   app.use((req, res, next) => {
-    // Allow both production and development environments
-    const allowedOrigins = [
-      'https://download-spaces.replit.app',
-      'http://localhost:5000',
-      'http://localhost:3000'
-    ];
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [CORS] Request received:`, {
+      method: req.method,
+      url: req.url,
+      origin: req.headers.origin,
+      host: req.headers.host
+    });
 
-    const origin = req.headers.origin;
-    if (origin) {
-      // Allow any Replit preview URL
-      if (origin.endsWith('.replit.dev') || allowedOrigins.includes(origin)) {
-        res.header("Access-Control-Allow-Origin", origin);
-      }
-    }
-
+    // Allow all origins during testing
+    res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Headers", "Content-Type");
+    res.header("Access-Control-Max-Age", "86400"); // 24 hours
 
     if (req.method === "OPTIONS") {
-      res.sendStatus(200);
-    } else {
-      next();
+      console.log(`[${timestamp}] [CORS] Responding to OPTIONS request`);
+      return res.status(200).end();
     }
+
+    next();
   });
 
   app.get("/api/webhooks/count", async (_req, res) => {
@@ -139,7 +135,8 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.post("/api/webhook", async (req, res) => {
-    console.log("[Webhook] Received incoming webhook request", {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [Webhook] Received incoming webhook request`, {
       url: req.url,
       method: req.method,
       contentType: req.headers['content-type'],
@@ -161,17 +158,17 @@ export function registerRoutes(app: Express): Server {
         } else {
           parsedBody = req.body;
         }
-        console.log("[Webhook] Successfully parsed request body:", {
+        console.log(`[${timestamp}] [Webhook] Successfully parsed request body:`, {
           count: Array.isArray(parsedBody) ? parsedBody.length : 1,
-          sample: Array.isArray(parsedBody) ? 
+          sample: Array.isArray(parsedBody) ?
             { userId: parsedBody[0]?.userId, spaceName: parsedBody[0]?.spaceName } :
             { userId: parsedBody?.userId, spaceName: parsedBody?.spaceName }
         });
       } catch (parseError) {
-        console.error("[Webhook] Failed to parse request body:", parseError, {
+        console.error(`[${timestamp}] [Webhook] Failed to parse request body:`, parseError, {
           receivedBody: typeof req.body === 'string' ? req.body : (Buffer.isBuffer(req.body) ? req.body.toString() : JSON.stringify(req.body))
         });
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: "Invalid JSON in request body",
           details: (parseError as Error).message,
           receivedContentType: req.headers['content-type']
@@ -182,12 +179,12 @@ export function registerRoutes(app: Express): Server {
       let validatedData;
       try {
         validatedData = webhookSchema.parse(parsedBody);
-        console.log("[Webhook] Data validation successful", {
+        console.log(`[${timestamp}] [Webhook] Data validation successful`, {
           isArray: Array.isArray(validatedData),
           count: Array.isArray(validatedData) ? validatedData.length : 1
         });
       } catch (validationError) {
-        console.error("[Webhook] Schema validation failed:", validationError);
+        console.error(`[${timestamp}] [Webhook] Schema validation failed:`, validationError);
         return res.status(400).json({
           error: "Invalid webhook data structure",
           details: (validationError as Error).message
@@ -213,7 +210,7 @@ export function registerRoutes(app: Express): Server {
         });
 
         if (existingEntry) {
-          console.log("[Webhook] Duplicate webhook detected", {
+          console.log(`[${timestamp}] [Webhook] Duplicate webhook detected`, {
             ip: webhookData.ip,
             spaceName: webhookData.spaceName,
             tweetUrl: webhookData.tweetUrl
@@ -231,7 +228,7 @@ export function registerRoutes(app: Express): Server {
           .values(webhookData)
           .returning();
 
-        console.log("[Webhook] Successfully inserted new webhook", {
+        console.log(`[${timestamp}] [Webhook] Successfully inserted new webhook`, {
           id: insertedWebhook.id,
           userId: insertedWebhook.userId,
           spaceName: insertedWebhook.spaceName
@@ -250,7 +247,7 @@ export function registerRoutes(app: Express): Server {
 
       res.status(201).json(results);
     } catch (error) {
-      console.error("[Webhook] Error processing webhook:", error);
+      console.error(`[${timestamp}] [Webhook] Error processing webhook:`, error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       res.status(500).json({
