@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
 import { webhooks } from "@db/schema";
-import { desc } from "drizzle-orm";
+import { desc, sql } from "drizzle-orm";
 import express from "express";
 
 export function registerRoutes(app: Express): Server {
@@ -25,6 +25,35 @@ export function registerRoutes(app: Express): Server {
     next();
   });
 
+  // Daily cleanup task
+  const runDailyCleanup = async () => {
+    try {
+      console.log('[Cleanup] Starting daily webhook cleanup...');
+
+      // Begin transaction
+      await db.transaction(async (tx) => {
+        // Delete duplicates keeping the most recent entry
+        const deleteResult = await tx.execute(sql`
+          DELETE FROM webhooks a
+          USING webhooks b
+          WHERE a.ip = b.ip 
+          AND a.space_name = b.space_name 
+          AND a.tweet_url = b.tweet_url
+          AND a.created_at < b.created_at;
+        `);
+
+        console.log(`[Cleanup] Removed ${deleteResult.rowCount} duplicate webhooks`);
+      });
+    } catch (error) {
+      console.error('[Cleanup] Error during webhook cleanup:', error);
+    }
+  };
+
+  // Schedule daily cleanup
+  setInterval(runDailyCleanup, 24 * 60 * 60 * 1000); // Run every 24 hours
+  // Also run immediately on startup
+  runDailyCleanup();
+
   // Get historical webhooks
   app.get("/api/webhooks", async (req, res) => {
     try {
@@ -36,6 +65,19 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error fetching webhooks:", error);
       res.status(500).json({ error: "Failed to fetch webhooks" });
+    }
+  });
+
+  // Webhook count endpoint
+  app.get("/api/webhooks/count", async (req, res) => {
+    try {
+      const result = await db.select({ 
+        count: sql<number>`count(*)::int` 
+      }).from(webhooks);
+      res.json(result[0].count);
+    } catch (error) {
+      console.error("Error counting webhooks:", error);
+      res.status(500).json({ error: "Failed to count webhooks" });
     }
   });
 

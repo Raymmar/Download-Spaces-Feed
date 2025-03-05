@@ -1,4 +1,4 @@
-import { pgTable, text, uuid, timestamp, index } from "drizzle-orm/pg-core";
+import { pgTable, text, uuid, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 export const webhooks = pgTable("webhooks", {
@@ -15,8 +15,8 @@ export const webhooks = pgTable("webhooks", {
   createdAt: timestamp("created_at").defaultNow().notNull()
 }, (table) => {
   return {
-    // Add composite index for duplicate checking
-    duplicateCheckIdx: index("duplicate_check_idx").on(
+    // Change to uniqueIndex to prevent duplicates
+    duplicateCheckIdx: uniqueIndex("duplicate_check_idx").on(
       table.ip,
       table.spaceName,
       table.tweetUrl,
