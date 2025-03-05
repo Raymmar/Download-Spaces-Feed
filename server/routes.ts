@@ -114,6 +114,8 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.post("/api/webhook", async (req, res) => {
+    console.log("[Webhook] Received incoming webhook request");
+
     try {
       // Parse body based on content type
       let parsedBody;
@@ -125,12 +127,19 @@ export function registerRoutes(app: Express): Server {
         } else {
           parsedBody = req.body;
         }
+        console.log("[Webhook] Successfully parsed request body:", {
+          userId: parsedBody.userId,
+          spaceName: parsedBody.spaceName,
+          tweetUrl: parsedBody.tweetUrl
+        });
       } catch (parseError) {
+        console.error("[Webhook] Failed to parse request body:", parseError);
         return res.status(400).json({ error: "Invalid JSON in request body" });
       }
 
       // Validate webhook data
       const validatedData = webhookSchema.parse(parsedBody);
+      console.log("[Webhook] Data validation successful");
 
       // Check for recent duplicates using the indexed fields
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -146,6 +155,7 @@ export function registerRoutes(app: Express): Server {
       });
 
       if (existingEntry) {
+        console.log("[Webhook] Duplicate webhook detected");
         return res.status(200).json({
           message: "Duplicate webhook detected",
           webhook: sanitizeWebhook(existingEntry),
@@ -158,6 +168,8 @@ export function registerRoutes(app: Express): Server {
         .values(validatedData)
         .returning();
 
+      console.log("[Webhook] Successfully inserted new webhook");
+
       // Notify connected clients with sanitized data
       const sanitizedWebhook = sanitizeWebhook(insertedWebhook);
       const eventData = `data: ${JSON.stringify(sanitizedWebhook)}\n\n`;
@@ -165,6 +177,7 @@ export function registerRoutes(app: Express): Server {
 
       res.status(201).json(sanitizedWebhook);
     } catch (error) {
+      console.error("[Webhook] Error processing webhook:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       res.status(500).json({
