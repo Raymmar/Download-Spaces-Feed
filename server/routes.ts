@@ -53,9 +53,11 @@ export function registerRoutes(app: Express): Server {
 
   // Add CORS headers middleware for webhook endpoint
   app.use((req, res, next) => {
+    // Only allow requests from the deployed app domain
     res.header("Access-Control-Allow-Origin", "https://download-spaces.replit.app");
     res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    res.header("Access-Control-Allow-Headers", "*");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.header("Access-Control-Allow-Credentials", "true");
 
     if (req.method === "OPTIONS") {
       res.sendStatus(200);
@@ -114,7 +116,12 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.post("/api/webhook", async (req, res) => {
-    console.log("[Webhook] Received incoming webhook request");
+    console.log("[Webhook] Received incoming webhook request", {
+      contentType: req.headers['content-type'],
+      contentLength: req.headers['content-length'],
+      origin: req.headers['origin'],
+      method: req.method
+    });
 
     try {
       // Parse body based on content type
@@ -134,7 +141,11 @@ export function registerRoutes(app: Express): Server {
         });
       } catch (parseError) {
         console.error("[Webhook] Failed to parse request body:", parseError);
-        return res.status(400).json({ error: "Invalid JSON in request body" });
+        return res.status(400).json({ 
+          error: "Invalid JSON in request body",
+          details: (parseError as Error).message,
+          receivedContentType: req.headers['content-type']
+        });
       }
 
       // Validate webhook data
