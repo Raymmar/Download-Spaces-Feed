@@ -10,7 +10,7 @@ app.set("trust proxy", true);
 // Basic request logging
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
-  log(`${timestamp} Request:`, {
+  console.log(`[${timestamp}] Request:`, {
     method: req.method,
     path: req.path
   });

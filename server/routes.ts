@@ -24,38 +24,29 @@ export function registerRoutes(app: Express): Server {
     next();
   });
 
+  // Simple webhook endpoint - just store and notify
   app.post("/api/webhook", async (req, res) => {
     try {
-      // Insert webhook data directly
-      const [insertedWebhook] = await db
+      const [webhook] = await db
         .insert(webhooks)
         .values(req.body)
         .returning();
 
-      console.log(`Webhook received:`, {
-        id: insertedWebhook.id,
-        userId: insertedWebhook.userId,
-        spaceName: insertedWebhook.spaceName
-      });
-
       // Notify connected clients
-      const eventData = `data: ${JSON.stringify(insertedWebhook)}\n\n`;
+      const eventData = `data: ${JSON.stringify(webhook)}\n\n`;
       clients.forEach((client) => client.write(eventData));
 
-      res.status(201).json({
-        status: "created",
-        webhook: insertedWebhook
-      });
+      res.status(201).json(webhook);
     } catch (error) {
-      console.error("Error processing webhook:", error);
+      console.error("Error storing webhook:", error);
       res.status(500).json({
-        error: "Failed to process webhook",
+        error: "Failed to store webhook",
         message: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });
 
-  // Keep SSE endpoint for real-time updates
+  // SSE endpoint for real-time updates
   app.get("/api/events", (req, res) => {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
