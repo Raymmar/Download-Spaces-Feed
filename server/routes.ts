@@ -56,8 +56,18 @@ export function registerRoutes(app: Express): Server {
 
   // Add CORS headers middleware for webhook endpoint
   app.use((req, res, next) => {
-    // Only allow requests from the deployed app domain
-    res.header("Access-Control-Allow-Origin", "https://download-spaces.replit.app");
+    // Allow both production and development environments
+    const allowedOrigins = [
+      'https://download-spaces.replit.app',
+      'http://localhost:5000',
+      'http://localhost:3000'
+    ];
+
+    const origin = req.headers.origin;
+    if (origin && allowedOrigins.includes(origin)) {
+      res.header("Access-Control-Allow-Origin", origin);
+    }
+
     res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
     res.header("Access-Control-Allow-Credentials", "true");
