@@ -13,11 +13,6 @@ import { useQuery } from "@tanstack/react-query";
 // Parse CSV data
 const csvData = `
 Date,Weekly users
-8/3/24,0
-8/4/24,0
-8/5/24,0
-8/6/24,0
-8/7/24,0
 8/8/24,0
 8/9/24,0
 8/10/24,0
@@ -192,6 +187,11 @@ Date,Weekly users
 1/26/25,3070
 1/27/25,3098
 1/28/25,3121
+1/29/25,3128
+1/30/25,3132
+1/31/25,3137
+2/1/25,3152
+2/2/25,3187
 `;
 
 type ChartDataPoint = {
