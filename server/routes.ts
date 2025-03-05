@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
 import { webhooks } from "@db/schema";
+import { desc } from "drizzle-orm";
 import express from "express";
 
 export function registerRoutes(app: Express): Server {
@@ -22,6 +23,20 @@ export function registerRoutes(app: Express): Server {
       body: req.method === 'POST' ? JSON.stringify(req.body) : undefined
     });
     next();
+  });
+
+  // Get historical webhooks
+  app.get("/api/webhooks", async (req, res) => {
+    try {
+      const recentWebhooks = await db.query.webhooks.findMany({
+        orderBy: [desc(webhooks.createdAt)],
+        limit: 200
+      });
+      res.json(recentWebhooks);
+    } catch (error) {
+      console.error("Error fetching webhooks:", error);
+      res.status(500).json({ error: "Failed to fetch webhooks" });
+    }
   });
 
   // Simple webhook endpoint - just store and notify
