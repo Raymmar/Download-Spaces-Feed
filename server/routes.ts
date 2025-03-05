@@ -64,8 +64,11 @@ export function registerRoutes(app: Express): Server {
     ];
 
     const origin = req.headers.origin;
-    if (origin && allowedOrigins.includes(origin)) {
-      res.header("Access-Control-Allow-Origin", origin);
+    if (origin) {
+      // Allow any Replit preview URL
+      if (origin.endsWith('.replit.dev') || allowedOrigins.includes(origin)) {
+        res.header("Access-Control-Allow-Origin", origin);
+      }
     }
 
     res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
