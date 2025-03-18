@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/neon-serverless";
-import { Pool } from "@neondatabase/serverless";
+import ws from "ws";
 import * as schema from "@db/schema";
 
 if (!process.env.DATABASE_URL) {
@@ -8,15 +8,8 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Create a pool with proper error handling and reconnection
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-
-// Add error handler for the pool
-pool.on('error', (err) => {
-  console.error('Unexpected database pool error:', err);
+export const db = drizzle({
+  connection: process.env.DATABASE_URL,
+  schema,
+  ws: ws,
 });
-
-export const db = drizzle(pool, { schema });
-
-// Export pool for cleanup if needed
-export { pool };
