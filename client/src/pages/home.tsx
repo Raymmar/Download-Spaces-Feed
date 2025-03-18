@@ -20,26 +20,50 @@ export default function Home() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Use React Query with auto-refresh for polling
   const { data, isLoading, refetch } = useQuery<Webhook[]>({
     queryKey: [
       "/api/webhooks",
       selectedUserId ? `?userId=${selectedUserId}` : "",
     ],
-    refetchInterval: 5000, // Poll every 5 seconds
-    refetchIntervalInBackground: true, // Continue polling in background
-    staleTime: 0, // Consider data immediately stale to enable polling
   });
 
   // Update webhooks when data changes or filter changes
   useEffect(() => {
     if (data) {
+      // If we have a selectedUserId, only include matching webhooks
       const filteredWebhooks = selectedUserId
         ? data.filter((webhook) => webhook.userId === selectedUserId)
         : data;
       setWebhooks(filteredWebhooks.slice(0, 200));
     }
   }, [data, selectedUserId]);
+
+  // Setup SSE and handle real-time updates
+  useEffect(() => {
+    refetch();
+
+    const events = new EventSource("/api/events");
+
+    events.onmessage = (event) => {
+      const webhook = JSON.parse(event.data);
+      setWebhooks((prev) => {
+        // Only add new webhook if it matches the current filter or no filter is applied
+        if (!selectedUserId || webhook.userId === selectedUserId) {
+          return [webhook, ...prev.slice(0, 199)]; // Keep max 200 items
+        }
+        return prev;
+      });
+    };
+
+    events.onerror = (error) => {
+      console.error("SSE Error:", error);
+      events.close();
+    };
+
+    return () => {
+      events.close();
+    };
+  }, [refetch, selectedUserId]);
 
   const handleCopyUrl = async (url: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -64,6 +88,7 @@ export default function Home() {
     setSelectedUserId(null);
   };
 
+  // Extract tweet ID from URL
   const getTweetId = (url: string) => {
     const matches = url.match(/status\/(\d+)/);
     return matches ? matches[1] : null;
