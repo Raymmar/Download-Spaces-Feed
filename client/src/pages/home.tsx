@@ -263,6 +263,14 @@ export default function Home() {
           <div>
             <div className="lg:sticky lg:top-[88px]">
               <StatsWidget />
+              <div className="mt-4 text-center">
+                <Link href="/docs">
+                  <Button variant="ghost" size="sm" className="text-muted-foreground">
+                    <FileText className="mr-2 h-4 w-4" />
+                    Privacy Policy
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
