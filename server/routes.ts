@@ -10,24 +10,19 @@ export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   const clients = new Set<any>();
 
-  // Enable CORS for webhook endpoint - support both dev and production
-  const REPLIT_DOMAIN = process.env.REPLIT_SLUG ? 
-    `https://${process.env.REPLIT_SLUG}.${process.env.REPLIT_DOMAIN}` : 
-    "http://localhost:5000";
-
+  // Enable CORS for webhook endpoint
   app.use(cors({
-    origin: [REPLIT_DOMAIN, "https://chromewebstore.google.com"],
+    origin: true,
     methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type'],
-    credentials: true
+    allowedHeaders: ['Content-Type']
   }));
 
-  // Simple JSON body parsing with increased limit for media URLs
+  // Simple JSON body parsing
   app.use(express.json({ 
     limit: '10mb'
   }));
 
-  // Enhanced request logging for production debugging
+  // Basic request logging
   app.use((req, res, next) => {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] Request:`, {
