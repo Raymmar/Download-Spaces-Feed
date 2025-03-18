@@ -115,9 +115,16 @@ export function registerRoutes(app: Express): Server {
   // Webhook count endpoint
   app.get("/api/webhooks/count", async (req, res) => {
     try {
+      // Force fresh count with no cache
+      res.setHeader('Cache-Control', 'no-cache');
       const result = await db.select({ 
-        count: sql<number>`count(*)::int` 
+        count: sql<number>`count(id)::int` 
       }).from(webhooks);
+      
+      if (!result[0]?.count && result[0]?.count !== 0) {
+        throw new Error("Invalid count result");
+      }
+      
       res.json(result[0].count);
     } catch (error) {
       console.error("Error counting webhooks:", error);
