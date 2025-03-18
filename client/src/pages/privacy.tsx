@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { SiGithub } from "react-icons/si";
 
 export default function Privacy() {
   return (
@@ -65,6 +66,21 @@ export default function Privacy() {
                 <p className="font-medium">
                   We do not collect any personally identifiable information. Your privacy is important to us.
                 </p>
+                <div className="pt-4">
+                  <p className="mb-4">
+                    Our extension is open source! You can review the code and contribute on GitHub:
+                  </p>
+                  <a 
+                    href="https://github.com/Raymmar/download-twitter-spaces"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button variant="outline" className="gap-2">
+                      <SiGithub className="h-4 w-4" />
+                      View Source Code
+                    </Button>
+                  </a>
+                </div>
               </div>
             </CardContent>
           </Card>
