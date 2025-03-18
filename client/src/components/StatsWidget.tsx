@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   Area,
   AreaChart,
@@ -10,7 +9,7 @@ import {
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 
-// Parse CSV data
+// Parse CSV data into chart format
 const csvData = `
 Date,Weekly users
 8/8/24,0
@@ -194,13 +193,7 @@ Date,Weekly users
 2/2/25,3187
 `;
 
-type ChartDataPoint = {
-  date: string;
-  users: number;
-};
-
-// Parse CSV data into chart format
-const chartData: ChartDataPoint[] = csvData
+const chartData = csvData
   .split("\n")
   .slice(1)
   .map((line: string) => {
@@ -211,10 +204,10 @@ const chartData: ChartDataPoint[] = csvData
         month: "short",
         day: "numeric",
       }),
-      users: parseInt(users) || 0,
+      webhooks: parseInt(users) || 0,
     };
   })
-  .filter((data: ChartDataPoint) => data.users > 0);
+  .filter((data) => data.webhooks > 0);
 
 export function StatsWidget() {
   const { data: webhookCount } = useQuery<number>({
@@ -226,27 +219,13 @@ export function StatsWidget() {
       <Card className="mt-4">
         <CardContent className="p-6">
           <p className="text-muted-foreground">
-            This website displays a live activity feed from the{" "}
-            <a href="https://chromewebstore.google.com/detail/download-twitter-spaces/hjgpigfbmdlajibmebhndhjiiohodgfi">
-              Download Twitter Spaces{" "}
-            </a>{" "}
-            Chrome Extension.
+            This dashboard displays real-time webhook activity and analytics for debugging and monitoring incoming webhook requests.
           </p>
-          {/* <Button variant="default">
-            <svg
-              className="mr-2 h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29zm13.342 2.166a5.446 5.446 0 0 1 1.45 7.09l.002.003h-.002l-5.344 9.257c.206.01.413.016.621.016 6.627 0 12-5.373 12-12 0-1.54-.29-3.011-.818-4.366zM12 16.364a4.364 4.364 0 1 1 0-8.728 4.364 4.364 0 0 1 0 8.728Z" />
-            </svg>
-            Install Extension
-          </Button> */}
         </CardContent>
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+          <CardTitle className="text-sm font-medium">Webhook Activity Trend</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[200px]">
@@ -270,7 +249,7 @@ export function StatsWidget() {
                 <Tooltip />
                 <Area
                   type="monotone"
-                  dataKey="users"
+                  dataKey="webhooks"
                   fill="#9C64FB"
                   fillOpacity={0.2}
                   stroke="hsl(var(--primary))"
@@ -286,12 +265,12 @@ export function StatsWidget() {
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium">
-              Active Installs
+              Total Client Connections
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">
-              {chartData[chartData.length - 1]?.users.toLocaleString()}
+              {chartData[chartData.length - 1]?.webhooks.toLocaleString()}
             </div>
           </CardContent>
         </Card>
@@ -299,7 +278,7 @@ export function StatsWidget() {
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium">
-              Spaces Downloaded
+              Total Webhooks Received
             </CardTitle>
           </CardHeader>
           <CardContent>

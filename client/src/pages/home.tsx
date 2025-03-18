@@ -3,14 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { FileText, X } from "lucide-react";
 import type { Webhook } from "@/types/webhook";
 import { useToast } from "@/hooks/use-toast";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { Tweet } from "react-tweet";
 import { StatsWidget } from "@/components/StatsWidget";
 
 dayjs.extend(relativeTime);
@@ -30,7 +28,6 @@ export default function Home() {
   // Update webhooks when data changes or filter changes
   useEffect(() => {
     if (data) {
-      // If we have a selectedUserId, only include matching webhooks
       const filteredWebhooks = selectedUserId
         ? data.filter((webhook) => webhook.userId === selectedUserId)
         : data;
@@ -47,9 +44,8 @@ export default function Home() {
     events.onmessage = (event) => {
       const webhook = JSON.parse(event.data);
       setWebhooks((prev) => {
-        // Only add new webhook if it matches the current filter or no filter is applied
         if (!selectedUserId || webhook.userId === selectedUserId) {
-          return [webhook, ...prev.slice(0, 199)]; // Keep max 200 items
+          return [webhook, ...prev.slice(0, 199)];
         }
         return prev;
       });
@@ -88,12 +84,6 @@ export default function Home() {
     setSelectedUserId(null);
   };
 
-  // Extract tweet ID from URL
-  const getTweetId = (url: string) => {
-    const matches = url.match(/status\/(\d+)/);
-    return matches ? matches[1] : null;
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 px-0 pt-0 pb-0">
       <nav className="w-full border-b px-4 py-4 fixed top-0 left-0 bg-background z-50">
@@ -111,29 +101,13 @@ export default function Home() {
                 fill="#9C64FB"
               />
             </svg>
-            <h1 className="text-2xl font-bold whitespace-nowrap">Download Twitter Spaces</h1>
+            <h1 className="text-2xl font-bold whitespace-nowrap">Webhook Receiver Dashboard</h1>
           </div>
           <div className="flex gap-2 w-full sm:w-auto items-center justify-center">
-            <a href="https://raymmar.com" target="_blank">
+            <a href="https://github.com/yourusername/webhook-receiver" target="_blank">
               <Button variant="outline">
-                {/* <FileText className="mr-2 h-4 w-4" /> */}
-                By Raymmar
-              </Button>
-            </a>
-            <a
-              href="https://chromewebstore.google.com/detail/download-twitter-spaces/hjgpigfbmdlajibmebhndhjiiohodgfi"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button variant="default">
-                <svg
-                  className="mr-2 h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29zm13.342 2.166a5.446 5.446 0 0 1 1.45 7.09l.002.003h-.002l-5.344 9.257c.206.01.413.016.621.016 6.627 0 12-5.373 12-12 0-1.54-.29-3.011-.818-4.366zM12 16.364a4.364 4.364 0 1 1 0-8.728 4.364 4.364 0 0 1 0 8.728Z" />
-                </svg>
-                Install Extension
+                <FileText className="mr-2 h-4 w-4" />
+                Documentation
               </Button>
             </a>
           </div>
@@ -148,7 +122,7 @@ export default function Home() {
                   <CardContent className="p-4 flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <p className="text-sm text-muted-foreground">
-                        EID history for:{" "}
+                        Filtered webhooks for User ID:{" "}
                         <span className="font-mono font-bold">
                           {selectedUserId}
                         </span>
@@ -192,29 +166,6 @@ export default function Home() {
                               : date.fromNow();
                           })()}
                         </span>
-                        {getTweetId(webhook.tweetUrl) && (
-                          <Button
-                            variant="outline"
-                            asChild
-                            size="sm"
-                            className="gap-1 h-7 px-2 text-xs"
-                          >
-                            <a
-                              href={webhook.tweetUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <svg
-                                className="h-4 w-4"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                              >
-                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                              </svg>
-                              View
-                            </a>
-                          </Button>
-                        )}
                       </div>
                       <div className="flex flex-col gap-2">
                         <div className="text-sm text-muted-foreground">
@@ -226,7 +177,7 @@ export default function Home() {
                           <span className="break-all">{webhook.mediaType}</span>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          <span className="font-medium">EID:</span>{" "}
+                          <span className="font-medium">User ID:</span>{" "}
                           <button
                             onClick={() => handleUserIdClick(webhook.userId)}
                             className="font-mono break-all text-primary hover:underline"
@@ -237,9 +188,7 @@ export default function Home() {
                         <div className="text-sm text-muted-foreground">
                           <span className="font-medium">Media URL:</span>{" "}
                           <button
-                            onClick={(e) =>
-                              handleCopyUrl(webhook.mediaUrl, e)
-                            }
+                            onClick={(e) => handleCopyUrl(webhook.mediaUrl, e)}
                             className="text-primary hover:underline ml-1 font-mono break-words text-left w-full"
                           >
                             {webhook.mediaUrl}
@@ -249,7 +198,7 @@ export default function Home() {
                       <div className="flex flex-col pt-2 gap-1">
                         <div>
                           <p className="text-sm text-muted-foreground">
-                            Download from:
+                            Request Origin:
                           </p>
                           <p>{`${webhook.city}, ${webhook.country}`}</p>
                         </div>
