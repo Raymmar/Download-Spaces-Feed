@@ -15,12 +15,10 @@ export const webhooks = pgTable("webhooks", {
   createdAt: timestamp("created_at").defaultNow().notNull()
 }, (table) => {
   return {
-    // Change to uniqueIndex to prevent duplicates
+    // Update unique index to include mediaUrl and remove createdAt
     duplicateCheckIdx: uniqueIndex("duplicate_check_idx").on(
-      table.ip,
-      table.spaceName,
-      table.tweetUrl,
-      table.createdAt
+      table.mediaUrl,
+      table.tweetUrl
     )
   };
 });

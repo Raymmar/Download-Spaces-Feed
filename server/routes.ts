@@ -1,13 +1,21 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
-import { webhooks } from "@db/schema";
+import { webhooks, insertWebhookSchema } from "@db/schema";
 import { desc, sql } from "drizzle-orm";
 import express from "express";
+import cors from "cors";
 
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   const clients = new Set<any>();
+
+  // Enable CORS for webhook endpoint
+  app.use(cors({
+    origin: true,
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type']
+  }));
 
   // Simple JSON body parsing
   app.use(express.json({ 
@@ -36,8 +44,7 @@ export function registerRoutes(app: Express): Server {
         const deleteResult = await tx.execute(sql`
           DELETE FROM webhooks a
           USING webhooks b
-          WHERE a.ip = b.ip 
-          AND a.space_name = b.space_name 
+          WHERE a.media_url = b.media_url 
           AND a.tweet_url = b.tweet_url
           AND a.created_at < b.created_at;
         `);
@@ -81,24 +88,39 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Simple webhook endpoint - just store and notify
+  // Enhanced webhook endpoint with validation and duplicate handling
   app.post("/api/webhook", async (req, res) => {
     try {
-      const [webhook] = await db
-        .insert(webhooks)
-        .values(req.body)
-        .returning();
+      // Validate request body against schema
+      const validatedData = insertWebhookSchema.parse(req.body);
 
-      // Notify connected clients
-      const eventData = `data: ${JSON.stringify(webhook)}\n\n`;
-      clients.forEach((client) => client.write(eventData));
+      try {
+        // Attempt to insert the webhook
+        const [webhook] = await db
+          .insert(webhooks)
+          .values(validatedData)
+          .returning();
 
-      res.status(201).json(webhook);
+        // Notify connected clients
+        const eventData = `data: ${JSON.stringify(webhook)}\n\n`;
+        clients.forEach((client) => client.write(eventData));
+
+        res.status(201).json(webhook);
+      } catch (error: any) {
+        // Check if this is a duplicate entry error
+        if (error.code === '23505') { // PostgreSQL unique violation code
+          return res.status(409).json({
+            error: "Duplicate webhook",
+            message: "This webhook has already been processed"
+          });
+        }
+        throw error; // Re-throw other errors
+      }
     } catch (error) {
-      console.error("Error storing webhook:", error);
-      res.status(500).json({
-        error: "Failed to store webhook",
-        message: error instanceof Error ? error.message : "Unknown error"
+      console.error("Error processing webhook:", error);
+      res.status(error.errors ? 400 : 500).json({
+        error: error.errors ? "Invalid webhook data" : "Failed to store webhook",
+        message: error.errors || (error instanceof Error ? error.message : "Unknown error")
       });
     }
   });
