@@ -54,6 +54,7 @@ export default function Privacy() {
                 <ul className="list-disc pl-6 space-y-2">
                   <li>Approximate geographic location of users downloading content</li>
                   <li>URLs of media being downloaded</li>
+                  <li>Link to related post if available</li>
                 </ul>
                 <p>
                   This information helps us:
@@ -63,8 +64,8 @@ export default function Privacy() {
                   <li>Diagnose extension problems</li>
                   <li>Improve the stability and usability of the extension</li>
                 </ul>
-                <p className="font-medium">
-                  We do not collect any personally identifiable information. Your privacy is important to us.
+                <p>
+                  We do not collect any personally identifiable information or track any other information about you.
                 </p>
                 <div className="pt-4">
                   <p className="mb-4">
