@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { FileText, X } from "lucide-react";
+import { Eye, X } from "lucide-react";
 import type { Webhook } from "@/types/webhook";
 import { useToast } from "@/hooks/use-toast";
 import dayjs from "dayjs";
@@ -27,10 +27,8 @@ export default function Home() {
     ],
   });
 
-  // Update webhooks when data changes or filter changes
   useEffect(() => {
     if (data) {
-      // If we have a selectedUserId, only include matching webhooks
       const filteredWebhooks = selectedUserId
         ? data.filter((webhook) => webhook.userId === selectedUserId)
         : data;
@@ -38,7 +36,6 @@ export default function Home() {
     }
   }, [data, selectedUserId]);
 
-  // Setup SSE and handle real-time updates
   useEffect(() => {
     refetch();
 
@@ -47,9 +44,8 @@ export default function Home() {
     events.onmessage = (event) => {
       const webhook = JSON.parse(event.data);
       setWebhooks((prev) => {
-        // Only add new webhook if it matches the current filter or no filter is applied
         if (!selectedUserId || webhook.userId === selectedUserId) {
-          return [webhook, ...prev.slice(0, 199)]; // Keep max 200 items
+          return [webhook, ...prev.slice(0, 199)];
         }
         return prev;
       });
@@ -88,7 +84,6 @@ export default function Home() {
     setSelectedUserId(null);
   };
 
-  // Extract tweet ID from URL
   const getTweetId = (url: string) => {
     const matches = url.match(/status\/(\d+)/);
     return matches ? matches[1] : null;
@@ -116,7 +111,6 @@ export default function Home() {
           <div className="flex gap-2 w-full sm:w-auto items-center justify-center">
             <a href="https://raymmar.com" target="_blank">
               <Button variant="outline">
-                {/* <FileText className="mr-2 h-4 w-4" /> */}
                 By Raymmar
               </Button>
             </a>
@@ -266,7 +260,7 @@ export default function Home() {
               <div className="mt-4 text-center">
                 <Link href="/privacy">
                   <Button variant="ghost" size="sm" className="text-muted-foreground">
-                    <FileText className="mr-2 h-4 w-4" />
+                    <Eye className="mr-2 h-4 w-4" />
                     Privacy Policy
                   </Button>
                 </Link>
