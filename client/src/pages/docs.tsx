@@ -45,11 +45,32 @@ export default function Docs() {
               </Button>
             </CardContent>
           </Card>
-          <a
-            href="https://chromewebstore.google.com/detail/download-twitter-spaces/hjgpigfbmdlajibmebhndhjiiohodgfi"
-            target="_blank"
-            rel="noopener noreferrer"
-          ></a>
+
+          <Card>
+            <CardContent className="p-6">
+              <h2 className="text-xl font-bold mb-4">Privacy Policy</h2>
+              <div className="space-y-4 text-muted-foreground">
+                <p>
+                  We collect anonymous usage data to improve the Download Twitter Spaces extension and make the download process more reliable. This includes:
+                </p>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>Approximate geographic location of users downloading content</li>
+                  <li>URLs of media being downloaded</li>
+                </ul>
+                <p>
+                  This information helps us:
+                </p>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>Troubleshoot download issues</li>
+                  <li>Diagnose extension problems</li>
+                  <li>Improve the stability and usability of the extension</li>
+                </ul>
+                <p className="font-medium">
+                  We do not collect any personally identifiable information. Your privacy is important to us.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
