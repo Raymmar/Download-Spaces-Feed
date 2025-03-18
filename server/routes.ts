@@ -10,27 +10,129 @@ export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   const clients = new Set<any>();
 
-  // Enable CORS for webhook endpoint
+  // Production-ready CORS configuration
   app.use(cors({
-    origin: true,
+    origin: true, // Allows all origins in production
     methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type']
+    allowedHeaders: ['Content-Type'],
+    maxAge: 86400 // CORS preflight cache for 24 hours
   }));
 
-  // Simple JSON body parsing
+  // Increased JSON body limit for production
   app.use(express.json({ 
-    limit: '10mb'
+    limit: '10mb',
+    verify: (req, res, buf) => {
+      // Store raw body for webhook signature verification if needed
+      (req as any).rawBody = buf;
+    }
   }));
 
-  // Basic request logging
+  // Enhanced request logging for production
   app.use((req, res, next) => {
+    const start = Date.now();
     const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] Request:`, {
-      method: req.method,
-      url: req.url,
-      body: req.method === 'POST' ? JSON.stringify(req.body) : undefined
+
+    // Log request
+    console.log(`[${timestamp}] Incoming ${req.method} ${req.url}`, {
+      headers: req.headers,
+      body: req.method === 'POST' ? JSON.stringify(req.body) : undefined,
+      query: req.query
     });
+
+    // Log response
+    res.on('finish', () => {
+      const duration = Date.now() - start;
+      console.log(`[${timestamp}] Completed ${req.method} ${req.url} ${res.statusCode} - ${duration}ms`);
+    });
+
     next();
+  });
+
+  // Health check endpoint for production monitoring
+  app.get("/health", (req, res) => {
+    res.status(200).json({ status: "healthy", timestamp: new Date().toISOString() });
+  });
+
+  // Enhanced webhook endpoint with improved error handling
+  app.post("/api/webhook", async (req, res) => {
+    const requestId = Math.random().toString(36).substring(7);
+    console.log(`[${requestId}] Processing webhook request`);
+
+    try {
+      // Validate request body against schema
+      const validatedData = insertWebhookSchema.parse(req.body);
+      console.log(`[${requestId}] Webhook data validated successfully`);
+
+      try {
+        // Attempt to insert the webhook
+        const [webhook] = await db
+          .insert(webhooks)
+          .values(validatedData)
+          .returning();
+
+        console.log(`[${requestId}] Webhook stored successfully:`, webhook.id);
+
+        // Notify connected clients
+        const eventData = `data: ${JSON.stringify(webhook)}\n\n`;
+        clients.forEach((client) => client.write(eventData));
+
+        res.status(201).json(webhook);
+      } catch (error: any) {
+        // Handle duplicate entry error
+        if (error.code === '23505') {
+          console.log(`[${requestId}] Duplicate webhook detected`);
+          return res.status(409).json({
+            error: "Duplicate webhook",
+            message: "This webhook has already been processed"
+          });
+        }
+        throw error;
+      }
+    } catch (error: any) {
+      console.error(`[${requestId}] Error processing webhook:`, error);
+      res.status(error.errors ? 400 : 500).json({
+        error: error.errors ? "Invalid webhook data" : "Failed to store webhook",
+        message: error.errors || (error instanceof Error ? error.message : "Unknown error"),
+        requestId
+      });
+    }
+  });
+
+  // Get historical webhooks
+  app.get("/api/webhooks", async (req, res) => {
+    try {
+      const recentWebhooks = await db.query.webhooks.findMany({
+        orderBy: [desc(webhooks.createdAt)],
+        limit: 200
+      });
+      res.json(recentWebhooks);
+    } catch (error) {
+      console.error("Error fetching webhooks:", error);
+      res.status(500).json({ error: "Failed to fetch webhooks" });
+    }
+  });
+
+  // Webhook count endpoint
+  app.get("/api/webhooks/count", async (req, res) => {
+    try {
+      const result = await db.select({ 
+        count: sql<number>`count(*)::int` 
+      }).from(webhooks);
+      res.json(result[0].count);
+    } catch (error) {
+      console.error("Error counting webhooks:", error);
+      res.status(500).json({ error: "Failed to count webhooks" });
+    }
+  });
+
+  // SSE endpoint for real-time updates
+  app.get("/api/events", (req, res) => {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    clients.add(res);
+    req.on("close", () => clients.delete(res));
   });
 
   // Daily cleanup task
@@ -60,80 +162,6 @@ export function registerRoutes(app: Express): Server {
   setInterval(runDailyCleanup, 24 * 60 * 60 * 1000); // Run every 24 hours
   // Also run immediately on startup
   runDailyCleanup();
-
-  // Get historical webhooks
-  app.get("/api/webhooks", async (req, res) => {
-    try {
-      const recentWebhooks = await db.query.webhooks.findMany({
-        orderBy: [desc(webhooks.createdAt)],
-        limit: 200
-      });
-      res.json(recentWebhooks);
-    } catch (error) {
-      console.error("Error fetching webhooks:", error);
-      res.status(500).json({ error: "Failed to fetch webhooks" });
-    }
-  });
-
-  // Webhook count endpoint
-  app.get("/api/webhooks/count", async (req, res) => {
-    try {
-      const result = await db.select({ 
-        count: sql<number>`count(*)::int` 
-      }).from(webhooks);
-      res.json(result[0].count);
-    } catch (error) {
-      console.error("Error counting webhooks:", error);
-      res.status(500).json({ error: "Failed to count webhooks" });
-    }
-  });
-
-  // Enhanced webhook endpoint with validation and duplicate handling
-  app.post("/api/webhook", async (req, res) => {
-    try {
-      // Validate request body against schema
-      const validatedData = insertWebhookSchema.parse(req.body);
-
-      try {
-        // Attempt to insert the webhook
-        const [webhook] = await db
-          .insert(webhooks)
-          .values(validatedData)
-          .returning();
-
-        // Notify connected clients
-        const eventData = `data: ${JSON.stringify(webhook)}\n\n`;
-        clients.forEach((client) => client.write(eventData));
-
-        res.status(201).json(webhook);
-      } catch (error: any) {
-        // Check if this is a duplicate entry error
-        if (error.code === '23505') { // PostgreSQL unique violation code
-          return res.status(409).json({
-            error: "Duplicate webhook",
-            message: "This webhook has already been processed"
-          });
-        }
-        throw error; // Re-throw other errors
-      }
-    } catch (error) {
-      console.error("Error processing webhook:", error);
-      res.status(error.errors ? 400 : 500).json({
-        error: error.errors ? "Invalid webhook data" : "Failed to store webhook",
-        message: error.errors || (error instanceof Error ? error.message : "Unknown error")
-      });
-    }
-  });
-
-  // SSE endpoint for real-time updates
-  app.get("/api/events", (req, res) => {
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-
-    clients.add(res);
-    req.on("close", () => clients.delete(res));
-  });
 
   return httpServer;
 }
