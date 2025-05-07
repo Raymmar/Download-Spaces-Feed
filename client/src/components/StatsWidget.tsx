@@ -12,7 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 
 // Parse CSV data
 const csvData = `
-Date,Weekly users
+Date,users
 9/8/24,0
 9/9/24,1
 9/10/24,1
