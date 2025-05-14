@@ -156,6 +156,12 @@ export function registerRoutes(app: Express): Server {
       
       const prevMonthStart = new Date(monthStart);
       prevMonthStart.setDate(prevMonthStart.getDate() - 30);
+
+      // Get total count
+      const totalResult = await db.select({ 
+        count: sql<number>`count(id)::int` 
+      })
+      .from(webhooks);
       
       // Today's count
       const todayResult = await db.select({ 
@@ -199,7 +205,15 @@ export function registerRoutes(app: Express): Server {
       .from(webhooks)
       .where(sql`created_at >= ${prevMonthStart.toISOString()} AND created_at < ${monthStart.toISOString()}`);
       
+      // Count of records older than 60 days
+      const olderRecordsResult = await db.select({ 
+        count: sql<number>`count(id)::int` 
+      })
+      .from(webhooks)
+      .where(sql`created_at < ${prevMonthStart.toISOString()}`);
+      
       // Calculate percentage changes
+      const totalCount = totalResult[0]?.count || 0;
       const todayCount = todayResult[0]?.count || 0;
       const yesterdayCount = yesterdayResult[0]?.count || 0;
       const todayChange = yesterdayCount > 0 
@@ -218,7 +232,10 @@ export function registerRoutes(app: Express): Server {
         ? ((monthCount - prevMonthCount) / prevMonthCount) * 100 
         : null;
       
+      const olderCount = olderRecordsResult[0]?.count || 0;
+      
       res.json({
+        total: totalCount,
         today: {
           count: todayCount,
           previous: yesterdayCount,
@@ -233,7 +250,8 @@ export function registerRoutes(app: Express): Server {
           count: monthCount,
           previous: prevMonthCount,
           change: monthChange
-        }
+        },
+        older: olderCount
       });
     } catch (error) {
       console.error("Error fetching webhook stats:", error);

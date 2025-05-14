@@ -285,6 +285,7 @@ const chartData: ChartDataPoint[] = csvData
 
 // Define the type for our stats response
 type WebhookStats = {
+  total: number;
   today: {
     count: number;
     previous: number;
@@ -300,6 +301,7 @@ type WebhookStats = {
     previous: number;
     change: number | null;
   };
+  older: number;
 };
 
 // Component to display change indicator
@@ -431,6 +433,23 @@ export function StatsWidget() {
       </div>
       
       {/* New time-based stat cards */}
+      {webhookStats && (
+        <Card className="p-4">
+          <div className="flex flex-row items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Total downloads: <span className="font-semibold">{webhookStats.total.toLocaleString()}</span>
+              </p>
+              {webhookStats.older > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Including {webhookStats.older.toLocaleString()} downloads from before {new Date(new Date().setDate(new Date().getDate() - 60)).toLocaleDateString()} (60+ days ago)
+                </p>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
+      
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
