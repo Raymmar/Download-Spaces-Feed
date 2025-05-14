@@ -271,25 +271,40 @@ Date,users
 `;
 
 type ChartDataPoint = {
-  date: string;
-  users: number;
-  downloads: number;
+  date: string;      // Display date (e.g., "Mar 18")
+  dateKey: string;   // Standardized date key for lookups (e.g., "3-18")
+  users: number;     // User count for this date
+  downloads: number; // Download count for this date
 };
 
 // Parse CSV data into chart format
+// Create a date key formatter to standardize date formats across datasets
+const formatDateKey = (date: Date): string => {
+  return `${date.getMonth()+1}-${date.getDate()}`; // Format as "M-D" (e.g., "3-18")
+};
+
+// Parse the CSV data for user statistics
 const chartData: ChartDataPoint[] = csvData
   .split("\n")
   .slice(1)
   .map((line: string) => {
     const [date, users] = line.split(",");
     const parsedDate = new Date(date);
+    
+    // Create a standardized date display format for the chart
+    const displayDate = parsedDate.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+    
+    // Create a standard date key for lookup between datasets
+    const dateKey = formatDateKey(parsedDate);
+    
     return {
-      date: parsedDate.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
+      date: displayDate, // For display (e.g., "Mar 18")
+      dateKey, // For internal matching (e.g., "3-18")
       users: parseInt(users) || 0,
-      // We'll add the downloads data later from the API
+      // Default downloads to 0
       downloads: 0,
     };
   })
@@ -393,7 +408,7 @@ export function StatsWidget() {
   
   // Process chart data by adding download information from real database data
   const processedChartData = [...chartData].map(point => ({
-    ...point,
+    ...point, // This will copy all properties including dateKey
     downloads: 0 // Default to 0 downloads
   }));
   
@@ -401,30 +416,52 @@ export function StatsWidget() {
   if (dailyDownloads?.length) {
     console.log("Daily downloads data:", dailyDownloads);
     
-    // Create a date map for quick lookup from the API data
+    // Create a date map for quick lookup from the API data using our standardized key format
     const downloadMap = new Map<string, number>();
     
-    // Convert API dates (2025-03-18 format) to the same format as our chart dates
+    // Process the API download data
     dailyDownloads.forEach(item => {
-      const apiDate = new Date(item.date);
-      // Format to match chart date format (e.g., "Mar 18")
-      const month = apiDate.toLocaleString('en-US', { month: 'short' });
-      const day = apiDate.getDate();
-      const formattedDate = `${month} ${day}`;
-      
-      const downloads = parseInt(item.downloads, 10);
-      downloadMap.set(formattedDate, downloads);
+      try {
+        // Parse the API date (format: 2025-03-18)
+        const apiDate = new Date(item.date);
+        if (isNaN(apiDate.getTime())) {
+          console.warn(`Invalid date format in download data: ${item.date}`);
+          return;
+        }
+        
+        // Create standardized date key (same format for both datasets)
+        const dateKey = formatDateKey(apiDate);
+        
+        const downloads = parseInt(item.downloads, 10);
+        
+        // If we already have a value for this date key, add to it
+        const existingValue = downloadMap.get(dateKey) || 0;
+        downloadMap.set(dateKey, existingValue + downloads);
+      } catch (error) {
+        console.error(`Error processing download data entry:`, item, error);
+      }
     });
     
-    // Apply the real download data where dates match
+    // Apply the real download data using our standardized dateKey
     processedChartData.forEach((point, index) => {
-      const downloadCount = downloadMap.get(point.date);
+      const downloadCount = downloadMap.get(point.dateKey);
       if (downloadCount !== undefined) {
         processedChartData[index].downloads = downloadCount;
       }
     });
     
     console.log("Processed chart data with real downloads:", processedChartData);
+    
+    // Log matches/mismatches for debugging
+    const downloadKeys = [];
+    downloadMap.forEach((_, key) => downloadKeys.push(key));
+    
+    console.log("Download date keys available:", downloadKeys);
+    console.log("Chart date keys:", processedChartData.map(p => p.dateKey));
+    
+    // Log matches between the two datasets
+    const matchCount = processedChartData.filter(p => downloadMap.has(p.dateKey)).length;
+    console.log(`Matched ${matchCount} out of ${processedChartData.length} dates with download data`);
   }
   
   return (
