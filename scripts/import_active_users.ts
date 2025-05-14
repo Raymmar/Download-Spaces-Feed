@@ -63,7 +63,9 @@ async function importActiveUsers(filePath: string) {
         date: formattedDate,
         userCount,
       };
-    });
+    })
+    // Filter out entries with 0 users as requested
+    .filter(record => record.userCount > 0);
     
     // Using a transaction to ensure data consistency
     await db.transaction(async (tx) => {
