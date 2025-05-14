@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
-import { webhooks, activeUsers, insertWebhookSchema } from "@db/schema";
+import { webhooks, insertWebhookSchema } from "@db/schema";
 import { desc, sql } from "drizzle-orm";
 import express from "express";
 import cors from "cors";
@@ -343,58 +343,6 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error fetching webhook stats:", error);
       res.status(500).json({ error: "Failed to fetch webhook stats" });
-    }
-  });
-
-  // Get active user counts for the chart
-  app.get("/api/users/active", async (req, res) => {
-    try {
-      // No cache
-      res.setHeader('Cache-Control', 'no-store');
-      
-      // Get all active user data for last 180 days to match the CSV
-      const oneEightyDaysAgo = new Date();
-      oneEightyDaysAgo.setDate(oneEightyDaysAgo.getDate() - 180);
-      
-      const result = await db.select({
-        date: activeUsers.date,
-        userCount: activeUsers.userCount,
-      })
-      .from(activeUsers)
-      .where(sql`date >= ${oneEightyDaysAgo.toISOString().slice(0, 10)}`)
-      .orderBy(activeUsers.date);
-      
-      res.json(result);
-    } catch (error) {
-      console.error("Error fetching active user stats:", error);
-      res.status(500).json({ error: "Failed to fetch active user stats" });
-    }
-  });
-
-  // Get daily download counts for the chart
-  app.get("/api/webhooks/daily", async (req, res) => {
-    try {
-      // No cache
-      res.setHeader('Cache-Control', 'no-store');
-      
-      // Get data for last 90 days to match the active users chart
-      const ninetyDaysAgo = new Date();
-      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-      
-      const result = await db.execute(sql`
-        SELECT 
-          DATE(created_at) as date,
-          COUNT(*) as downloads
-        FROM webhooks
-        WHERE created_at >= ${ninetyDaysAgo.toISOString().slice(0, 10)}
-        GROUP BY DATE(created_at)
-        ORDER BY date ASC
-      `);
-      
-      res.json(result.rows);
-    } catch (error) {
-      console.error("Error fetching daily download stats:", error);
-      res.status(500).json({ error: "Failed to fetch daily download stats" });
     }
   });
 

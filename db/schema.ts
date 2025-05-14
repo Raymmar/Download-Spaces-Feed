@@ -1,4 +1,4 @@
-import { pgTable, text, uuid, timestamp, uniqueIndex, date, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, uuid, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 export const webhooks = pgTable("webhooks", {
@@ -23,19 +23,7 @@ export const webhooks = pgTable("webhooks", {
   };
 });
 
-export const activeUsers = pgTable("active_users", {
-  date: date("date").primaryKey(),
-  userCount: integer("user_count").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull()
-});
-
 export const insertWebhookSchema = createInsertSchema(webhooks);
 export const selectWebhookSchema = createSelectSchema(webhooks);
 export type InsertWebhook = typeof webhooks.$inferInsert;
 export type SelectWebhook = typeof webhooks.$inferSelect;
-
-export const insertActiveUserSchema = createInsertSchema(activeUsers);
-export const selectActiveUserSchema = createSelectSchema(activeUsers);
-export type InsertActiveUser = typeof activeUsers.$inferInsert;
-export type SelectActiveUser = typeof activeUsers.$inferSelect;
