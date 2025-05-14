@@ -20,110 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Parse CSV data
-const csvData = `
-Date,users
-2/1/25,3152
-2/2/25,3187
-2/3/25,3245
-2/4/25,3291
-2/5/25,3328
-2/6/25,3346
-2/7/25,3396
-2/8/25,3418
-2/9/25,3418
-2/10/25,3439
-2/11/25,3475
-2/12/25,3486
-2/13/25,3498
-2/14/25,3496
-2/15/25,3491
-2/16/25,3480
-2/17/25,3485
-2/18/25,3493
-2/19/25,3495
-2/20/25,3506
-2/21/25,3523
-2/22/25,3540
-2/23/25,3573
-2/24/25,3608
-2/25/25,3622
-2/26/25,3631
-2/27/25,3654
-2/28/25,3656
-3/1/25,3668
-3/2/25,3673
-3/3/25,3697
-3/4/25,3703
-3/5/25,3725
-3/6/25,3705
-3/7/25,3711
-3/8/25,3723
-3/9/25,3723
-3/10/25,3757
-3/11/25,3776
-3/12/25,3817
-3/13/25,3830
-3/14/25,3842
-3/15/25,3872
-3/16/25,3896
-3/17/25,3914
-3/21/25,3951
-3/22/25,3961
-3/23/25,3967
-3/24/25,3997
-3/25/25,4000
-3/26/25,4000
-3/27/25,3993
-3/28/25,3981
-3/29/25,4008
-3/30/25,4039
-3/31/25,4028
-4/1/25,4034
-4/2/25,4048
-4/3/25,4061
-4/4/25,4055
-4/5/25,4066
-4/6/25,4105
-4/7/25,4120
-4/8/25,4124
-4/9/25,4132
-4/10/25,4149
-4/11/25,4183
-4/12/25,4212
-4/13/25,4218
-4/14/25,4242
-4/15/25,4246
-4/16/25,4238
-4/17/25,4237
-4/18/25,4232
-4/19/25,4254
-4/20/25,4245
-4/21/25,4249
-4/22/25,4252
-4/23/25,4279
-4/24/25,4285
-4/25/25,4298
-4/26/25,4307
-4/27/25,4335
-4/28/25,4348
-4/29/25,4380
-4/30/25,4380
-5/1/25,4377
-5/2/25,4372
-5/3/25,4378
-5/4/25,4385
-5/5/25,4398
-5/6/25,4411
-5/7/25,4418
-5/8/25,4418
-5/9/25,4424
-5/10/25,4445
-5/11/25,4467
-5/12/25,4485
-5/13/25,4505
-`;
-
+// Define types for our data models
 type ChartDataPoint = {
   date: string;      // Display date (e.g., "Mar 18")
   dateKey: string;   // Standardized date key for lookups (e.g., "3-18")
@@ -131,38 +28,15 @@ type ChartDataPoint = {
   downloads: number; // Download count for this date
 };
 
-// Parse CSV data into chart format
+type ActiveUserResponse = {
+  date: string;      // Date from DB in ISO format (e.g., "2025-02-01")
+  userCount: number; // User count for this date
+};
+
 // Create a date key formatter to standardize date formats across datasets
 const formatDateKey = (date: Date): string => {
   return `${date.getMonth()+1}-${date.getDate()}`; // Format as "M-D" (e.g., "3-18")
 };
-
-// Parse the CSV data for user statistics
-const chartData: ChartDataPoint[] = csvData
-  .split("\n")
-  .slice(1)
-  .map((line: string) => {
-    const [date, users] = line.split(",");
-    const parsedDate = new Date(date);
-    
-    // Create a standardized date display format for the chart
-    const displayDate = parsedDate.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-    
-    // Create a standard date key for lookup between datasets
-    const dateKey = formatDateKey(parsedDate);
-    
-    return {
-      date: displayDate, // For display (e.g., "Mar 18")
-      dateKey, // For internal matching (e.g., "3-18")
-      users: parseInt(users) || 0,
-      // Default downloads to 0
-      downloads: 0,
-    };
-  })
-  .filter((data: ChartDataPoint) => data.users > 0);
 
 // Define the type for our stats response
 type WebhookStats = {
@@ -260,11 +134,42 @@ export function StatsWidget() {
     refetchOnWindowFocus: true,
   });
   
+  // Fetch active user data from our new API endpoint
+  const { data: activeUserData, isLoading: usersLoading } = useQuery<ActiveUserResponse[]>({
+    queryKey: ["/api/users/active"],
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+  });
+  
+  // Convert API data into chart-compatible format
+  const chartData: ChartDataPoint[] = (activeUserData || []).map((item) => {
+    // Parse the API date (format: 2025-02-01)
+    const parsedDate = new Date(item.date);
+    
+    // Create a standardized date display format for the chart
+    const displayDate = parsedDate.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+    
+    // Create a standard date key for lookup between datasets
+    const dateKey = formatDateKey(parsedDate);
+    
+    return {
+      date: displayDate, // For display (e.g., "Mar 18")
+      dateKey,           // For internal matching (e.g., "3-18")
+      users: item.userCount,
+      downloads: 0,      // Default to 0 downloads
+    };
+  }).filter(data => data.users > 0);
+  
   // Process chart data by adding download information from real database data
-  const processedChartData = [...chartData].map(point => ({
-    ...point, // This will copy all properties including dateKey
-    downloads: 0 // Default to 0 downloads
-  }));
+  const processedChartData = (chartData.length > 0) 
+    ? [...chartData].map(point => ({
+        ...point, // This will copy all properties including dateKey
+        downloads: 0 // Default to 0 downloads
+      }))
+    : [];
   
   // Add real download data directly from the API
   if (dailyDownloads?.length) {
@@ -307,7 +212,7 @@ export function StatsWidget() {
     console.log("Processed chart data with real downloads:", processedChartData);
     
     // Log matches/mismatches for debugging
-    const downloadKeys = [];
+    const downloadKeys: string[] = [];
     downloadMap.forEach((_, key) => downloadKeys.push(key));
     
     console.log("Download date keys available:", downloadKeys);
@@ -420,7 +325,9 @@ export function StatsWidget() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">
-              {chartData[chartData.length - 1]?.users.toLocaleString()}
+              {processedChartData.length > 0 
+                ? processedChartData[processedChartData.length - 1]?.users.toLocaleString()
+                : "Loading..."}
             </div>
           </CardContent>
         </Card>
