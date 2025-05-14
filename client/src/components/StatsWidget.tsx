@@ -11,6 +11,7 @@ import {
   LineChart,
   Legend,
   ComposedChart,
+  Bar,
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowUpIcon, ArrowDownIcon, MinusIcon } from "lucide-react";
@@ -383,42 +384,38 @@ export function StatsWidget() {
       staleTime: 0, // Consider data stale immediately
     });
 
-  // Process chart data by adding download information
-  // This is a simplification - in reality, we'd need to distribute the total downloads
-  // across the time periods in a more sophisticated way
-  const processedChartData = [...chartData];
+  // Fetch daily download data from the API
+  const { data: dailyDownloads } = useQuery<{ date: string; downloads: number; }[]>({
+    queryKey: ["/api/webhooks/daily"],
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+  });
   
-  // If we have webhook count data, estimate downloads per day
-  if (webhookCount) {
-    // Simple approach: distribute downloads across the most recent 90 days (approximate 3 months)
-    const dailyDownloadEstimate = webhookCount / 90;
+  // Process chart data by adding download information from real database data
+  const processedChartData = [...chartData].map(point => ({
+    ...point,
+    downloads: 0 // Default to 0 downloads
+  }));
+  
+  // Add real download data if available
+  if (dailyDownloads?.length) {
+    // Create a date map for quick lookup
+    const dateMap = new Map<string, number>();
     
-    // Start with a small percentage and gradually increase to the current total
-    let runningTotal = 0;
-    const daysInChart = processedChartData.length;
+    dailyDownloads.forEach(item => {
+      // Format date in "MM/DD/YY" format to match chartData format
+      const date = new Date(item.date);
+      const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${String(date.getFullYear()).slice(2)}`;
+      dateMap.set(formattedDate, item.downloads);
+    });
     
-    for (let i = 0; i < daysInChart; i++) {
-      // Gradually scale up the downloads - simple linear progression for this example
-      // More sophisticated models could be used for a real application
-      const scaleFactor = (i + 1) / daysInChart;
-      const dailyDownload = Math.round(dailyDownloadEstimate * scaleFactor);
-      runningTotal += dailyDownload;
-      
-      // Don't exceed total downloads
-      if (runningTotal > webhookCount) {
-        const difference = runningTotal - webhookCount;
-        runningTotal -= difference;
-        processedChartData[i].downloads = dailyDownload - difference;
-      } else {
-        processedChartData[i].downloads = dailyDownload;
+    // Apply downloads to matching dates in chart data
+    processedChartData.forEach((point, index) => {
+      const downloadsForDate = dateMap.get(point.date);
+      if (downloadsForDate !== undefined) {
+        processedChartData[index].downloads = downloadsForDate;
       }
-    }
-    
-    // Ensure the total matches exactly
-    if (runningTotal < webhookCount) {
-      const lastIndex = processedChartData.length - 1;
-      processedChartData[lastIndex].downloads += (webhookCount - runningTotal);
-    }
+    });
   }
   
   return (
@@ -498,14 +495,12 @@ export function StatsWidget() {
                   strokeWidth={2}
                   name="Active Users"
                 />
-                <Line
+                <Bar
                   yAxisId="right"
-                  type="monotone"
                   dataKey="downloads"
-                  stroke="#10b981"
-                  strokeWidth={2}
-                  dot={false}
+                  fill="#10b981"
                   name="Spaces Downloaded"
+                  radius={[2, 2, 0, 0]}
                 />
               </ComposedChart>
             </ResponsiveContainer>
