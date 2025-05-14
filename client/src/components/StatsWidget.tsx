@@ -404,39 +404,6 @@ export function StatsWidget() {
   // across the time periods in a more sophisticated way
   const processedChartData = [...chartData];
   
-  // If we have webhook count data, estimate downloads per day
-  if (webhookCount) {
-    // Simple approach: distribute downloads across the most recent 90 days (approximate 3 months)
-    const dailyDownloadEstimate = webhookCount / 90;
-    
-    // Start with a small percentage and gradually increase to the current total
-    let runningTotal = 0;
-    const daysInChart = processedChartData.length;
-    
-    for (let i = 0; i < daysInChart; i++) {
-      // Gradually scale up the downloads - simple linear progression for this example
-      // More sophisticated models could be used for a real application
-      const scaleFactor = (i + 1) / daysInChart;
-      const dailyDownload = Math.round(dailyDownloadEstimate * scaleFactor);
-      runningTotal += dailyDownload;
-      
-      // Don't exceed total downloads
-      if (runningTotal > webhookCount) {
-        const difference = runningTotal - webhookCount;
-        runningTotal -= difference;
-        processedChartData[i].downloads = dailyDownload - difference;
-      } else {
-        processedChartData[i].downloads = dailyDownload;
-      }
-    }
-    
-    // Ensure the total matches exactly
-    if (runningTotal < webhookCount) {
-      const lastIndex = processedChartData.length - 1;
-      processedChartData[lastIndex].downloads += (webhookCount - runningTotal);
-    }
-  }
-  
   return (
     <div className="space-y-4">
       <Card>
@@ -476,7 +443,7 @@ export function StatsWidget() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-[240px]">
+          <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={processedChartData}>
                 <XAxis
@@ -515,7 +482,7 @@ export function StatsWidget() {
         <CardHeader>
           <div>
             <CardTitle className="text-sm font-medium">
-              Spaces Downloaded
+              Total Spaces Downloaded
             </CardTitle>
             <div className="text-3xl font-bold mt-2">
               {webhookCount?.toLocaleString() || "Loading..."}
@@ -555,11 +522,10 @@ export function StatsWidget() {
         </CardContent>
       </Card>
 
+
       {/* All stats cards shown together */}
       <Card>
-        <CardHeader className="pb-2">
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           {/* Rolling stats - displayed first */}
           <div className="grid grid-cols-2 gap-4 mb-4">
             {!webhookStats?.rolling ? (
@@ -638,7 +604,7 @@ export function StatsWidget() {
               </>
             )}
           </div>
-            
+
           {/* Period comparison stats */}
           <div className="grid grid-cols-3 gap-4">
             <Card>
