@@ -346,6 +346,31 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Get active user counts for the chart
+  app.get("/api/users/active", async (req, res) => {
+    try {
+      // No cache
+      res.setHeader('Cache-Control', 'no-store');
+      
+      // Get all active user data for last 180 days to match the CSV
+      const oneEightyDaysAgo = new Date();
+      oneEightyDaysAgo.setDate(oneEightyDaysAgo.getDate() - 180);
+      
+      const result = await db.select({
+        date: activeUsers.date,
+        userCount: activeUsers.userCount,
+      })
+      .from(activeUsers)
+      .where(sql`date >= ${oneEightyDaysAgo.toISOString().slice(0, 10)}`)
+      .orderBy(activeUsers.date);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching active user stats:", error);
+      res.status(500).json({ error: "Failed to fetch active user stats" });
+    }
+  });
+
   // Get daily download counts for the chart
   app.get("/api/webhooks/daily", async (req, res) => {
     try {
