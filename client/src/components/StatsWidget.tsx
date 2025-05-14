@@ -290,18 +290,23 @@ type WebhookStats = {
     count: number;
     previous: number;
     change: number | null;
+    label: string;
+    comparisonLabel: string;
   };
   week: {
     count: number;
     previous: number;
     change: number | null;
+    label: string;
+    comparisonLabel: string;
   };
   month: {
     count: number;
     previous: number;
     change: number | null;
+    label: string;
+    comparisonLabel: string;
   };
-  older: number;
 };
 
 // Component to display change indicator
@@ -438,7 +443,7 @@ export function StatsWidget() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
-              Last 30 Days
+              {statsLoading ? "This Month" : webhookStats?.month.label}
             </CardTitle>
           </CardHeader>
           <CardContent className="pb-4">
@@ -446,7 +451,9 @@ export function StatsWidget() {
               {statsLoading ? "Loading..." : webhookStats?.month.count.toLocaleString()}
             </div>
             <div className="mt-1">
-              <p className="text-xs text-muted-foreground">vs previous:</p>
+              <p className="text-xs text-muted-foreground">
+                {statsLoading ? "vs previous month:" : webhookStats?.month.comparisonLabel + ":"}
+              </p>
               {statsLoading ? (
                 <span className="text-xs">Loading...</span>
               ) : (
@@ -462,7 +469,7 @@ export function StatsWidget() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
-              Last 7 Days
+              {statsLoading ? "This Week" : webhookStats?.week.label}
             </CardTitle>
           </CardHeader>
           <CardContent className="pb-4">
@@ -470,7 +477,9 @@ export function StatsWidget() {
               {statsLoading ? "Loading..." : webhookStats?.week.count.toLocaleString()}
             </div>
             <div className="mt-1">
-              <p className="text-xs text-muted-foreground">vs previous:</p>
+              <p className="text-xs text-muted-foreground">
+                {statsLoading ? "vs previous week:" : webhookStats?.week.comparisonLabel + ":"}
+              </p>
               {statsLoading ? (
                 <span className="text-xs">Loading...</span>
               ) : (
@@ -486,7 +495,7 @@ export function StatsWidget() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
-              Today
+              {statsLoading ? "Today" : webhookStats?.today.label}
             </CardTitle>
           </CardHeader>
           <CardContent className="pb-4">
@@ -494,7 +503,9 @@ export function StatsWidget() {
               {statsLoading ? "Loading..." : webhookStats?.today.count.toLocaleString()}
             </div>
             <div className="mt-1">
-              <p className="text-xs text-muted-foreground">vs yesterday:</p>
+              <p className="text-xs text-muted-foreground">
+                {statsLoading ? "vs yesterday:" : webhookStats?.today.comparisonLabel + ":"}
+              </p>
               {statsLoading ? (
                 <span className="text-xs">Loading...</span>
               ) : (

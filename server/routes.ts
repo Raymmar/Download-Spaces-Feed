@@ -139,24 +139,36 @@ export function registerRoutes(app: Express): Server {
       res.setHeader('Cache-Control', 'no-cache');
       
       const now = new Date();
+      
+      // Today calculations
       const todayStart = new Date(now);
       todayStart.setHours(0, 0, 0, 0);
       
       const yesterdayStart = new Date(todayStart);
       yesterdayStart.setDate(yesterdayStart.getDate() - 1);
       
-      const weekStart = new Date(todayStart);
-      weekStart.setDate(weekStart.getDate() - 6); // Last 7 days including today
+      // Current month calculations (1st of current month to now)
+      const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       
-      const prevWeekStart = new Date(weekStart);
-      prevWeekStart.setDate(prevWeekStart.getDate() - 7);
+      // Previous month calculations (1st to last day of previous month)
+      const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
       
-      const monthStart = new Date(todayStart);
-      monthStart.setDate(monthStart.getDate() - 29); // Last 30 days including today
+      // Current week calculations (using Monday as first day of week)
+      const currentDay = now.getDay(); // 0 is Sunday, 1 is Monday
+      const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1;
       
-      const prevMonthStart = new Date(monthStart);
-      prevMonthStart.setDate(prevMonthStart.getDate() - 30);
-
+      const currentWeekStart = new Date(now);
+      currentWeekStart.setDate(now.getDate() - daysFromMonday);
+      currentWeekStart.setHours(0, 0, 0, 0);
+      
+      // Previous week calculations
+      const previousWeekStart = new Date(currentWeekStart);
+      previousWeekStart.setDate(previousWeekStart.getDate() - 7);
+      
+      const previousWeekEnd = new Date(currentWeekStart);
+      previousWeekEnd.setMilliseconds(previousWeekEnd.getMilliseconds() - 1);
+      
       // Get total count
       const totalResult = await db.select({ 
         count: sql<number>`count(id)::int` 
@@ -177,40 +189,33 @@ export function registerRoutes(app: Express): Server {
       .from(webhooks)
       .where(sql`created_at >= ${yesterdayStart.toISOString()} AND created_at < ${todayStart.toISOString()}`);
       
-      // Last 7 days count
-      const weekResult = await db.select({ 
+      // Current week's count (Monday to now)
+      const currentWeekResult = await db.select({ 
         count: sql<number>`count(id)::int` 
       })
       .from(webhooks)
-      .where(sql`created_at >= ${weekStart.toISOString()}`);
+      .where(sql`created_at >= ${currentWeekStart.toISOString()}`);
       
-      // Previous 7 days count
-      const prevWeekResult = await db.select({ 
+      // Previous week's count (previous Monday to previous Sunday)
+      const previousWeekResult = await db.select({ 
         count: sql<number>`count(id)::int` 
       })
       .from(webhooks)
-      .where(sql`created_at >= ${prevWeekStart.toISOString()} AND created_at < ${weekStart.toISOString()}`);
+      .where(sql`created_at >= ${previousWeekStart.toISOString()} AND created_at <= ${previousWeekEnd.toISOString()}`);
       
-      // Last 30 days count
-      const monthResult = await db.select({ 
+      // Current month's count (1st of month to now)
+      const currentMonthResult = await db.select({ 
         count: sql<number>`count(id)::int` 
       })
       .from(webhooks)
-      .where(sql`created_at >= ${monthStart.toISOString()}`);
+      .where(sql`created_at >= ${currentMonthStart.toISOString()}`);
       
-      // Previous 30 days count
-      const prevMonthResult = await db.select({ 
+      // Previous month's count (1st to last day of previous month)
+      const previousMonthResult = await db.select({ 
         count: sql<number>`count(id)::int` 
       })
       .from(webhooks)
-      .where(sql`created_at >= ${prevMonthStart.toISOString()} AND created_at < ${monthStart.toISOString()}`);
-      
-      // Count of records older than 60 days
-      const olderRecordsResult = await db.select({ 
-        count: sql<number>`count(id)::int` 
-      })
-      .from(webhooks)
-      .where(sql`created_at < ${prevMonthStart.toISOString()}`);
+      .where(sql`created_at >= ${previousMonthStart.toISOString()} AND created_at <= ${previousMonthEnd.toISOString()}`);
       
       // Calculate percentage changes
       const totalCount = totalResult[0]?.count || 0;
@@ -220,38 +225,45 @@ export function registerRoutes(app: Express): Server {
         ? ((todayCount - yesterdayCount) / yesterdayCount) * 100 
         : null;
       
-      const weekCount = weekResult[0]?.count || 0;
-      const prevWeekCount = prevWeekResult[0]?.count || 0;
-      const weekChange = prevWeekCount > 0 
-        ? ((weekCount - prevWeekCount) / prevWeekCount) * 100 
+      const currentWeekCount = currentWeekResult[0]?.count || 0;
+      const previousWeekCount = previousWeekResult[0]?.count || 0;
+      const weekChange = previousWeekCount > 0 
+        ? ((currentWeekCount - previousWeekCount) / previousWeekCount) * 100 
         : null;
       
-      const monthCount = monthResult[0]?.count || 0;
-      const prevMonthCount = prevMonthResult[0]?.count || 0;
-      const monthChange = prevMonthCount > 0 
-        ? ((monthCount - prevMonthCount) / prevMonthCount) * 100 
+      const currentMonthCount = currentMonthResult[0]?.count || 0;
+      const previousMonthCount = previousMonthResult[0]?.count || 0;
+      const monthChange = previousMonthCount > 0 
+        ? ((currentMonthCount - previousMonthCount) / previousMonthCount) * 100 
         : null;
       
-      const olderCount = olderRecordsResult[0]?.count || 0;
+      // Generate period labels for UI
+      const currentMonthName = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(currentMonthStart);
+      const previousMonthName = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(previousMonthStart);
       
       res.json({
         total: totalCount,
         today: {
           count: todayCount,
           previous: yesterdayCount,
-          change: todayChange
+          change: todayChange,
+          label: "Today",
+          comparisonLabel: "vs Yesterday"
         },
         week: {
-          count: weekCount,
-          previous: prevWeekCount,
-          change: weekChange
+          count: currentWeekCount,
+          previous: previousWeekCount,
+          change: weekChange,
+          label: "This Week",
+          comparisonLabel: "vs Last Week"
         },
         month: {
-          count: monthCount,
-          previous: prevMonthCount,
-          change: monthChange
-        },
-        older: olderCount
+          count: currentMonthCount,
+          previous: previousMonthCount,
+          change: monthChange,
+          label: currentMonthName,
+          comparisonLabel: `vs ${previousMonthName}`
+        }
       });
     } catch (error) {
       console.error("Error fetching webhook stats:", error);
