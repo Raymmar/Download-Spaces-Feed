@@ -590,15 +590,23 @@ export function StatsWidget() {
                     </div>
                     <div className="mt-1">
                       <p className="text-xs text-muted-foreground">
-                        {webhookStats.rolling.last7days.comparisonLabel}
+                        {webhookStats.rolling.last7days.comparisonLabel}:
                       </p>
                       <div className="flex items-center text-sm mt-1">
                         <span className="mr-2">
-                          Daily Avg: {webhookStats.rolling.last7days.dailyAverage.toLocaleString()}
+                          {(webhookStats.rolling.last7days.dailyAverage * 7).toLocaleString()} vs {(webhookStats.rolling.last7days.previousAverage * 7).toLocaleString()}
                         </span>
                         <ChangeIndicator
                           change={webhookStats.rolling.last7days.change || null}
                         />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Daily Average:
+                      </p>
+                      <div className="flex items-center text-sm mt-1">
+                        <span className="mr-2">
+                          {webhookStats.rolling.last7days.dailyAverage.toLocaleString()} vs {webhookStats.rolling.last7days.previousAverage.toLocaleString()}
+                        </span>
                       </div>
                     </div>
                   </CardContent>
@@ -616,15 +624,23 @@ export function StatsWidget() {
                     </div>
                     <div className="mt-1">
                       <p className="text-xs text-muted-foreground">
-                        {webhookStats.rolling.last30days.comparisonLabel}
+                        {webhookStats.rolling.last30days.comparisonLabel}:
                       </p>
                       <div className="flex items-center text-sm mt-1">
                         <span className="mr-2">
-                          Daily Avg: {webhookStats.rolling.last30days.dailyAverage.toLocaleString()}
+                          {(webhookStats.rolling.last30days.dailyAverage * 30).toLocaleString()} vs {(webhookStats.rolling.last30days.previousAverage * 30).toLocaleString()}
                         </span>
                         <ChangeIndicator
                           change={webhookStats.rolling.last30days.change || null}
                         />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Daily Average:
+                      </p>
+                      <div className="flex items-center text-sm mt-1">
+                        <span className="mr-2">
+                          {webhookStats.rolling.last30days.dailyAverage.toLocaleString()} vs {webhookStats.rolling.last30days.previousAverage.toLocaleString()}
+                        </span>
                       </div>
                     </div>
                   </CardContent>
