@@ -26,8 +26,7 @@ export default function Docs() {
                 Download Twitter Spaces Activity Feed
               </h1>
               <p className="text-muted-foreground mb-4">
-                This website displays a live activity feed of users downloading
-                content with the{" "}
+                This website displays live activity from the{" "}
                 <a href="https://chromewebstore.google.com/detail/download-twitter-spaces/hjgpigfbmdlajibmebhndhjiiohodgfi">
                   Download Twitter Spaces{" "}
                 </a>{" "}
