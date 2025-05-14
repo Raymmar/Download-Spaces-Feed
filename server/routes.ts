@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
-import { webhooks, insertWebhookSchema } from "@db/schema";
+import { webhooks, activeUsers, insertWebhookSchema } from "@db/schema";
 import { desc, sql } from "drizzle-orm";
 import express from "express";
 import cors from "cors";
