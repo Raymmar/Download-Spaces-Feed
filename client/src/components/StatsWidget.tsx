@@ -10,6 +10,7 @@ import {
   Line,
   LineChart,
   Legend,
+  ComposedChart,
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowUpIcon, ArrowDownIcon, MinusIcon } from "lucide-react";
@@ -368,7 +369,6 @@ function ChangeIndicator({ change }: { change: number | null }) {
 }
 
 export function StatsWidget() {
-  const [chartView, setChartView] = useState<'users' | 'comparison'>('users');
   
   const { data: webhookCount } = useQuery<number>({
     queryKey: ["/api/webhooks/count"],
@@ -448,89 +448,66 @@ export function StatsWidget() {
       </Card>
       
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader>
           <CardTitle className="text-sm font-medium">
-            {chartView === 'users' ? 'Active Users' : 'Users vs Downloads'}
+            Active Users & Downloads
           </CardTitle>
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="show-downloads" className="text-xs text-muted-foreground">
-              Show Downloads
-            </Label>
-            <Switch
-              id="show-downloads"
-              checked={chartView === 'comparison'}
-              onCheckedChange={(checked) => setChartView(checked ? 'comparison' : 'users')}
-            />
-          </div>
         </CardHeader>
         <CardContent>
           <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
-              {chartView === 'users' ? (
-                <AreaChart data={processedChartData}>
-                  <XAxis
-                    dataKey="date"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    interval="preserveStartEnd"
-                    minTickGap={30}
-                    tickFormatter={(value) => value.split(" ")[0]}
-                  />
-                  <YAxis
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `${(value / 1000).toFixed(1)}k`}
-                  />
-                  <Tooltip />
-                  <Area
-                    type="monotone"
-                    dataKey="users"
-                    fill="#9C64FB"
-                    fillOpacity={0.2}
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    name="Active Users"
-                  />
-                </AreaChart>
-              ) : (
-                <LineChart data={processedChartData}>
-                  <XAxis
-                    dataKey="date"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    interval="preserveStartEnd"
-                    minTickGap={30}
-                    tickFormatter={(value) => value.split(" ")[0]}
-                  />
-                  <YAxis
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `${(value / 1000).toFixed(1)}k`}
-                  />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="users"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    dot={false}
-                    name="Active Users"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="downloads"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    dot={false}
-                    name="Spaces Downloaded"
-                  />
-                </LineChart>
-              )}
+              <ComposedChart data={processedChartData}>
+                <XAxis
+                  dataKey="date"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  interval="preserveStartEnd"
+                  minTickGap={30}
+                  tickFormatter={(value) => value.split(" ")[0]}
+                />
+                <YAxis
+                  yAxisId="left"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `${(value / 1000).toFixed(1)}k`}
+                  domain={['auto', 'auto']}
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => value.toLocaleString()}
+                  domain={[0, 'auto']}
+                />
+                <Tooltip
+                  contentStyle={{ borderRadius: '8px' }}
+                  formatter={(value, name) => [value.toLocaleString(), name]}
+                />
+                <Legend />
+                <Area
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="users"
+                  fill="#9C64FB"
+                  fillOpacity={0.2}
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  name="Active Users"
+                />
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="downloads"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  dot={false}
+                  name="Spaces Downloaded"
+                />
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
