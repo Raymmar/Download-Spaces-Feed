@@ -346,6 +346,34 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Get daily webhook counts for the last 30 days
+  app.get("/api/webhooks/daily", async (req, res) => {
+    try {
+      const days = parseInt(req.query.days as string) || 30;
+      
+      // Calculate the date X days ago
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+      startDate.setHours(0, 0, 0, 0);
+      
+      // SQL query to get counts by day
+      const result = await db.execute(sql`
+        SELECT 
+          DATE_TRUNC('day', created_at) AS day,
+          COUNT(*) AS count
+        FROM webhooks
+        WHERE created_at >= ${startDate.toISOString()}
+        GROUP BY DATE_TRUNC('day', created_at)
+        ORDER BY day ASC
+      `);
+      
+      res.json(result.rows);
+    } catch (error) {
+      console.error("Error fetching daily webhook counts:", error);
+      res.status(500).json({ error: "Failed to fetch daily webhook counts" });
+    }
+  });
+
   // SSE endpoint for real-time updates
   app.get("/api/events", (req, res) => {
     res.setHeader("Content-Type", "text/event-stream");

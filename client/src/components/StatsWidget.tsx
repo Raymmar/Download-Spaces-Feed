@@ -10,6 +10,8 @@ import {
   Line,
   LineChart,
   Legend,
+  Bar,
+  BarChart,
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowUpIcon, ArrowDownIcon, MinusIcon } from "lucide-react";
@@ -292,6 +294,12 @@ const chartData: ChartDataPoint[] = csvData
     };
   })
   .filter((data: ChartDataPoint) => data.users > 0);
+
+// Define the daily download data type
+type DailyDownloadData = {
+  day: string;
+  count: number;
+};
 
 // Define the type for our stats response
 type WebhookStats = {
