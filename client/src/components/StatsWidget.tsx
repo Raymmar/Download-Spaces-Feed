@@ -559,46 +559,123 @@ export function StatsWidget() {
         </CardContent>
       </Card>
 
-      {/* Growth metrics - displayed as individual cards */}
-      
-      {/* Rolling stats - displayed first */}
-      <div className="grid grid-cols-2 gap-4">
-        {!webhookStats?.rolling ? (
-          <div className="col-span-2 text-center py-4">
-            <p className="text-muted-foreground">Loading rolling stats...</p>
+      {/* All stats cards shown together */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Growth Metrics</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Rolling stats - displayed first */}
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            {!webhookStats?.rolling ? (
+              <div className="col-span-2 text-center py-4">
+                <p className="text-muted-foreground">Loading rolling stats...</p>
+              </div>
+            ) : (
+              <>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      {webhookStats.rolling.last7days.label}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pb-4">
+                    <div className="text-2xl font-bold">
+                      {webhookStats.rolling.last7days.count.toLocaleString()}
+                    </div>
+                    <div className="mt-1">
+                      <p className="text-xs text-muted-foreground">
+                        {webhookStats.rolling.last7days.comparisonLabel}:
+                      </p>
+                      <div className="flex items-center text-sm mt-1">
+                        <span className="mr-2">
+                          {(webhookStats.rolling.last7days.dailyAverage * 7).toLocaleString()} vs {(webhookStats.rolling.last7days.previousAverage * 7).toLocaleString()}
+                        </span>
+                        <ChangeIndicator
+                          change={webhookStats.rolling.last7days.change || null}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Daily Average:
+                      </p>
+                      <div className="flex items-center text-sm mt-1">
+                        <span className="mr-2">
+                          {webhookStats.rolling.last7days.dailyAverage.toLocaleString()} vs {webhookStats.rolling.last7days.previousAverage.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      {webhookStats.rolling.last30days.label}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pb-4">
+                    <div className="text-2xl font-bold">
+                      {webhookStats.rolling.last30days.count.toLocaleString()}
+                    </div>
+                    <div className="mt-1">
+                      <p className="text-xs text-muted-foreground">
+                        {webhookStats.rolling.last30days.comparisonLabel}:
+                      </p>
+                      <div className="flex items-center text-sm mt-1">
+                        <span className="mr-2">
+                          {(webhookStats.rolling.last30days.dailyAverage * 30).toLocaleString()} vs {(webhookStats.rolling.last30days.previousAverage * 30).toLocaleString()}
+                        </span>
+                        <ChangeIndicator
+                          change={webhookStats.rolling.last30days.change || null}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Daily Average:
+                      </p>
+                      <div className="flex items-center text-sm mt-1">
+                        <span className="mr-2">
+                          {webhookStats.rolling.last30days.dailyAverage.toLocaleString()} vs {webhookStats.rolling.last30days.previousAverage.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </div>
-        ) : (
-          <>
+            
+          {/* Period comparison stats */}
+          <div className="grid grid-cols-3 gap-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium">
-                  {webhookStats.rolling.last7days.label}
+                  {statsLoading ? "This Month" : webhookStats?.month.label}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pb-4">
                 <div className="text-2xl font-bold">
-                  {webhookStats.rolling.last7days.count.toLocaleString()}
+                  {statsLoading
+                    ? "Loading..."
+                    : webhookStats?.month.count.toLocaleString()}
                 </div>
                 <div className="mt-1">
                   <p className="text-xs text-muted-foreground">
-                    {webhookStats.rolling.last7days.comparisonLabel}:
+                    {statsLoading
+                      ? "vs previous month:"
+                      : webhookStats?.month.comparisonLabel + ":"}
                   </p>
-                  <div className="flex items-center text-sm mt-1">
-                    <span className="mr-2">
-                      {(webhookStats.rolling.last7days.dailyAverage * 7).toLocaleString()} vs {(webhookStats.rolling.last7days.previousAverage * 7).toLocaleString()}
-                    </span>
-                    <ChangeIndicator
-                      change={webhookStats.rolling.last7days.change || null}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Daily Average:
-                  </p>
-                  <div className="flex items-center text-sm mt-1">
-                    <span className="mr-2">
-                      {webhookStats.rolling.last7days.dailyAverage.toLocaleString()} vs {webhookStats.rolling.last7days.previousAverage.toLocaleString()}
-                    </span>
-                  </div>
+                  {statsLoading ? (
+                    <span className="text-xs">Loading...</span>
+                  ) : (
+                    <div className="flex items-center text-sm mt-1">
+                      <span className="mr-2">
+                        {webhookStats?.month.previous.toLocaleString()}
+                      </span>
+                      <ChangeIndicator
+                        change={webhookStats?.month.change || null}
+                      />
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -606,144 +683,71 @@ export function StatsWidget() {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium">
-                  {webhookStats.rolling.last30days.label}
+                  {statsLoading ? "This Week" : webhookStats?.week.label}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pb-4">
                 <div className="text-2xl font-bold">
-                  {webhookStats.rolling.last30days.count.toLocaleString()}
+                  {statsLoading
+                    ? "Loading..."
+                    : webhookStats?.week.count.toLocaleString()}
                 </div>
                 <div className="mt-1">
                   <p className="text-xs text-muted-foreground">
-                    {webhookStats.rolling.last30days.comparisonLabel}:
+                    {statsLoading
+                      ? "vs previous week:"
+                      : webhookStats?.week.comparisonLabel + ":"}
                   </p>
-                  <div className="flex items-center text-sm mt-1">
-                    <span className="mr-2">
-                      {(webhookStats.rolling.last30days.dailyAverage * 30).toLocaleString()} vs {(webhookStats.rolling.last30days.previousAverage * 30).toLocaleString()}
-                    </span>
-                    <ChangeIndicator
-                      change={webhookStats.rolling.last30days.change || null}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Daily Average:
-                  </p>
-                  <div className="flex items-center text-sm mt-1">
-                    <span className="mr-2">
-                      {webhookStats.rolling.last30days.dailyAverage.toLocaleString()} vs {webhookStats.rolling.last30days.previousAverage.toLocaleString()}
-                    </span>
-                  </div>
+                  {statsLoading ? (
+                    <span className="text-xs">Loading...</span>
+                  ) : (
+                    <div className="flex items-center text-sm mt-1">
+                      <span className="mr-2">
+                        {webhookStats?.week.previous.toLocaleString()}
+                      </span>
+                      <ChangeIndicator change={webhookStats?.week.change || null} />
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
-          </>
-        )}
-      </div>
-        
-      {/* Period comparison stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              {statsLoading ? "This Month" : webhookStats?.month.label}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-4">
-            <div className="text-2xl font-bold">
-              {statsLoading
-                ? "Loading..."
-                : webhookStats?.month.count.toLocaleString()}
-            </div>
-            <div className="mt-1">
-              <p className="text-xs text-muted-foreground">
-                {statsLoading
-                  ? "vs previous month:"
-                  : webhookStats?.month.comparisonLabel + ":"}
-              </p>
-              {statsLoading ? (
-                <span className="text-xs">Loading...</span>
-              ) : (
-                <div className="flex items-center text-sm mt-1">
-                  <span className="mr-2">
-                    {webhookStats?.month.previous.toLocaleString()}
-                  </span>
-                  <ChangeIndicator
-                    change={webhookStats?.month.change || null}
-                  />
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              {statsLoading ? "This Week" : webhookStats?.week.label}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-4">
-            <div className="text-2xl font-bold">
-              {statsLoading
-                ? "Loading..."
-                : webhookStats?.week.count.toLocaleString()}
-            </div>
-            <div className="mt-1">
-              <p className="text-xs text-muted-foreground">
-                {statsLoading
-                  ? "vs previous week:"
-                  : webhookStats?.week.comparisonLabel + ":"}
-              </p>
-              {statsLoading ? (
-                <span className="text-xs">Loading...</span>
-              ) : (
-                <div className="flex items-center text-sm mt-1">
-                  <span className="mr-2">
-                    {webhookStats?.week.previous.toLocaleString()}
-                  </span>
-                  <ChangeIndicator
-                    change={webhookStats?.week.change || null}
-                  />
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {statsLoading ? "Today" : webhookStats?.today.label}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-4">
+                <div className="text-2xl font-bold">
+                  {statsLoading
+                    ? "Loading..."
+                    : webhookStats?.today.count.toLocaleString()}
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              {statsLoading ? "Today" : webhookStats?.today.label}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-4">
-            <div className="text-2xl font-bold">
-              {statsLoading
-                ? "Loading..."
-                : webhookStats?.today.count.toLocaleString()}
-            </div>
-            <div className="mt-1">
-              <p className="text-xs text-muted-foreground">
-                {statsLoading
-                  ? "vs yesterday:"
-                  : webhookStats?.today.comparisonLabel + ":"}
-              </p>
-              {statsLoading ? (
-                <span className="text-xs">Loading...</span>
-              ) : (
-                <div className="flex items-center text-sm mt-1">
-                  <span className="mr-2">
-                    {webhookStats?.today.previous.toLocaleString()}
-                  </span>
-                  <ChangeIndicator
-                    change={webhookStats?.today.change || null}
-                  />
+                <div className="mt-1">
+                  <p className="text-xs text-muted-foreground">
+                    {statsLoading
+                      ? "vs yesterday:"
+                      : webhookStats?.today.comparisonLabel + ":"}
+                  </p>
+                  {statsLoading ? (
+                    <span className="text-xs">Loading...</span>
+                  ) : (
+                    <div className="flex items-center text-sm mt-1">
+                      <span className="mr-2">
+                        {webhookStats?.today.previous.toLocaleString()}
+                      </span>
+                      <ChangeIndicator
+                        change={webhookStats?.today.change || null}
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              </CardContent>
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

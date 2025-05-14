@@ -119,7 +119,7 @@ export default function Home() {
         </div>
       </nav>
       <div className="max-w-[1200px] mx-auto mt-[120px] sm:mt-[72px] px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-[600px_1fr] gap-4 lg:[&>*:last-child]:order-none [&>*:last-child]:order-first">
+        <div className="grid grid-cols-1 lg:grid-cols-[600px_1fr] lg:[&>*:last-child]:order-none [&>*:last-child]:order-first">
           <ScrollArea>
             {selectedUserId && (
               <div className="pt-4 pr-4">
@@ -240,11 +240,11 @@ export default function Home() {
             )}
           </ScrollArea>
           <div>
-            <div className="lg:sticky lg:top-[72px] lg:h-[calc(100vh-72px)]">
-              <ScrollArea className="h-full overflow-auto">
-                <div className="pr-4">
+            <div className="lg:sticky lg:top-[88px] lg:h-[calc(100vh-100px)]">
+              <ScrollArea className="h-full">
+                <div className="pr-4 pt-0">
                   <StatsWidget />
-                  <div className="mt-4 pb-4 text-center">
+                  <div className="mt-4 text-center">
                     <Link href="/privacy">
                       <Button variant="ghost" size="sm" className="text-muted-foreground">
                         <Eye className="mr-2 h-4 w-4" />
