@@ -240,16 +240,20 @@ export default function Home() {
             )}
           </ScrollArea>
           <div>
-            <div className="lg:sticky lg:top-[88px]">
-              <StatsWidget />
-              <div className="mt-4 text-center">
-                <Link href="/privacy">
-                  <Button variant="ghost" size="sm" className="text-muted-foreground">
-                    <Eye className="mr-2 h-4 w-4" />
-                    Privacy Policy
-                  </Button>
-                </Link>
-              </div>
+            <div className="lg:sticky lg:top-[88px] lg:h-[calc(100vh-100px)]">
+              <ScrollArea className="h-full">
+                <div className="pr-4">
+                  <StatsWidget />
+                  <div className="mt-4 text-center">
+                    <Link href="/privacy">
+                      <Button variant="ghost" size="sm" className="text-muted-foreground">
+                        <Eye className="mr-2 h-4 w-4" />
+                        Privacy Policy
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </ScrollArea>
             </div>
           </div>
         </div>
