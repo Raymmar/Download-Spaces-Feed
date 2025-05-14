@@ -376,8 +376,6 @@ function ChangeIndicator({ change }: { change: number | null }) {
 }
 
 export function StatsWidget() {
-  const [chartView, setChartView] = useState<'users' | 'comparison'>('users');
-  
   const { data: webhookCount } = useQuery<number>({
     queryKey: ["/api/webhooks/count"],
   });
@@ -390,6 +388,20 @@ export function StatsWidget() {
       refetchInterval: 10000, // Refetch every 10 seconds
       staleTime: 0, // Consider data stale immediately
     });
+    
+  const { data: dailyDownloads, isLoading: downloadsLoading } = useQuery<DailyDownloadData[]>({
+    queryKey: ["/api/webhooks/daily"],
+  });
+  
+  // Prepare data for the daily downloads chart
+  const dailyDownloadsData = dailyDownloads?.map(item => {
+    // Convert the timestamp to a readable date
+    const date = new Date(item.day);
+    return {
+      day: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      downloads: Number(item.count)
+    };
+  }) || [];
 
   // Process chart data by adding download information
   // This is a simplification - in reality, we'd need to distribute the total downloads
@@ -455,122 +467,95 @@ export function StatsWidget() {
         </CardContent>
       </Card>
       
+      {/* Active Users Chart with integrated stats */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-medium">
-            {chartView === 'users' ? 'Active Users' : 'Users vs Downloads'}
-          </CardTitle>
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="show-downloads" className="text-xs text-muted-foreground">
-              Show Downloads
-            </Label>
-            <Switch
-              id="show-downloads"
-              checked={chartView === 'comparison'}
-              onCheckedChange={(checked) => setChartView(checked ? 'comparison' : 'users')}
-            />
+        <CardHeader>
+          <div>
+            <CardTitle className="text-sm font-medium">
+              Active Installs
+            </CardTitle>
+            <div className="text-3xl font-bold mt-2">
+              {chartData[chartData.length - 1]?.users.toLocaleString()}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-[200px]">
+          <div className="h-[240px]">
             <ResponsiveContainer width="100%" height="100%">
-              {chartView === 'users' ? (
-                <AreaChart data={processedChartData}>
-                  <XAxis
-                    dataKey="date"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    interval="preserveStartEnd"
-                    minTickGap={30}
-                    tickFormatter={(value) => value.split(" ")[0]}
-                  />
-                  <YAxis
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `${(value / 1000).toFixed(1)}k`}
-                  />
-                  <Tooltip />
-                  <Area
-                    type="monotone"
-                    dataKey="users"
-                    fill="#9C64FB"
-                    fillOpacity={0.2}
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    name="Active Users"
-                  />
-                </AreaChart>
-              ) : (
-                <LineChart data={processedChartData}>
-                  <XAxis
-                    dataKey="date"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    interval="preserveStartEnd"
-                    minTickGap={30}
-                    tickFormatter={(value) => value.split(" ")[0]}
-                  />
-                  <YAxis
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `${(value / 1000).toFixed(1)}k`}
-                  />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="users"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    dot={false}
-                    name="Active Users"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="downloads"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    dot={false}
-                    name="Spaces Downloaded"
-                  />
-                </LineChart>
-              )}
+              <AreaChart data={processedChartData}>
+                <XAxis
+                  dataKey="date"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  interval="preserveStartEnd"
+                  minTickGap={30}
+                  tickFormatter={(value) => value.split(" ")[0]}
+                />
+                <YAxis
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `${(value / 1000).toFixed(1)}k`}
+                />
+                <Tooltip />
+                <Area
+                  type="monotone"
+                  dataKey="users"
+                  fill="#9C64FB"
+                  fillOpacity={0.2}
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  name="Active Users"
+                />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">
-              Active Installs
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold">
-              {chartData[chartData.length - 1]?.users.toLocaleString()}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
+      {/* Daily Downloads Chart with integrated stats */}
+      <Card>
+        <CardHeader>
+          <div>
             <CardTitle className="text-sm font-medium">
               Spaces Downloaded
             </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold">
-              {Number(webhookCount).toLocaleString("en-US") ?? "Loading..."}
+            <div className="text-3xl font-bold mt-2">
+              {webhookCount?.toLocaleString() || "Loading..."}
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[120px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={dailyDownloadsData.slice(-14)} // Show last 14 days
+                margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <XAxis 
+                  dataKey="day" 
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  interval="preserveStartEnd"
+                  minTickGap={20}
+                />
+                <YAxis 
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <Tooltip />
+                <Bar 
+                  dataKey="downloads" 
+                  name="Daily Downloads"
+                  fill="#10b981" 
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* All stats cards shown together */}
       <Card>
