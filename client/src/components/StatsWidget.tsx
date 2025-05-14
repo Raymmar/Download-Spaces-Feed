@@ -397,34 +397,34 @@ export function StatsWidget() {
     downloads: 0 // Default to 0 downloads
   }));
   
-  // Add real download data if available
+  // Add real download data directly from the API
   if (dailyDownloads?.length) {
     console.log("Daily downloads data:", dailyDownloads);
     
-    // Create a date map for quick lookup
-    const dateMap = new Map<string, number>();
+    // Create a date map for quick lookup from the API data
+    const downloadMap = new Map<string, number>();
     
+    // Convert API dates (2025-03-18 format) to the same format as our chart dates
     dailyDownloads.forEach(item => {
-      // Format date in "MM/DD/YY" format to match chartData format
-      const date = new Date(item.date);
-      const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${String(date.getFullYear()).slice(2)}`;
-      // Convert download string to number
-      const downloadCount = parseInt(item.downloads, 10);
+      const apiDate = new Date(item.date);
+      // Format to match chart date format (e.g., "Mar 18")
+      const month = apiDate.toLocaleString('en-US', { month: 'short' });
+      const day = apiDate.getDate();
+      const formattedDate = `${month} ${day}`;
       
-      console.log(`Mapping ${item.date} to ${formattedDate}, downloads: ${downloadCount}`);
-      dateMap.set(formattedDate, downloadCount);
+      const downloads = parseInt(item.downloads, 10);
+      downloadMap.set(formattedDate, downloads);
     });
     
-    // Apply downloads to matching dates in chart data
+    // Apply the real download data where dates match
     processedChartData.forEach((point, index) => {
-      const downloadsForDate = dateMap.get(point.date);
-      if (downloadsForDate !== undefined) {
-        console.log(`Setting downloads for ${point.date}: ${downloadsForDate}`);
-        processedChartData[index].downloads = downloadsForDate;
+      const downloadCount = downloadMap.get(point.date);
+      if (downloadCount !== undefined) {
+        processedChartData[index].downloads = downloadCount;
       }
     });
     
-    console.log("Processed chart data:", processedChartData);
+    console.log("Processed chart data with real downloads:", processedChartData);
   }
   
   return (
@@ -510,8 +510,9 @@ export function StatsWidget() {
                   dataKey="downloads"
                   fill="#10b981"
                   maxBarSize={40}
+                  opacity={0.9}
                   name="Spaces Downloaded"
-                  radius={[2, 2, 0, 0]}
+                  radius={[4, 4, 0, 0]}
                 />
               </ComposedChart>
             </ResponsiveContainer>

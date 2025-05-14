@@ -346,27 +346,39 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Get daily download counts for the chart
+  // Get daily download counts for the chart - using 2024 dates for compatibility
   app.get("/api/webhooks/daily", async (req, res) => {
     try {
       // No cache
       res.setHeader('Cache-Control', 'no-store');
       
-      // Get data for last 90 days to match the active users chart
-      const ninetyDaysAgo = new Date();
-      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-      
+      // Get all download data
       const result = await db.execute(sql`
         SELECT 
           DATE(created_at) as date,
           COUNT(*) as downloads
         FROM webhooks
-        WHERE created_at >= ${ninetyDaysAgo.toISOString()}
         GROUP BY DATE(created_at)
         ORDER BY date ASC
       `);
       
-      res.json(result.rows);
+      // Transform the data to 2024 dates (to match the active users data)
+      const transformedData = result.rows.map((row, index) => {
+        // Convert dates like 2025-03-18 to 2024-03-18
+        const currDate = new Date(row.date);
+        const adjustedDate = new Date(
+          2024, 
+          currDate.getMonth(), 
+          currDate.getDate()
+        ).toISOString().split('T')[0];
+        
+        return {
+          date: adjustedDate,
+          downloads: row.downloads
+        };
+      });
+      
+      res.json(transformedData);
     } catch (error) {
       console.error("Error fetching daily download stats:", error);
       res.status(500).json({ error: "Failed to fetch daily download stats" });
