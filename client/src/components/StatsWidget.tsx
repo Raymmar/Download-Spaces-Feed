@@ -385,7 +385,7 @@ export function StatsWidget() {
     });
 
   // Fetch daily download data from the API
-  const { data: dailyDownloads } = useQuery<{ date: string; downloads: number; }[]>({
+  const { data: dailyDownloads } = useQuery<{ date: string; downloads: string; }[]>({
     queryKey: ["/api/webhooks/daily"],
     refetchOnMount: true,
     refetchOnWindowFocus: true,
@@ -399,6 +399,8 @@ export function StatsWidget() {
   
   // Add real download data if available
   if (dailyDownloads?.length) {
+    console.log("Daily downloads data:", dailyDownloads);
+    
     // Create a date map for quick lookup
     const dateMap = new Map<string, number>();
     
@@ -406,16 +408,23 @@ export function StatsWidget() {
       // Format date in "MM/DD/YY" format to match chartData format
       const date = new Date(item.date);
       const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${String(date.getFullYear()).slice(2)}`;
-      dateMap.set(formattedDate, item.downloads);
+      // Convert download string to number
+      const downloadCount = parseInt(item.downloads, 10);
+      
+      console.log(`Mapping ${item.date} to ${formattedDate}, downloads: ${downloadCount}`);
+      dateMap.set(formattedDate, downloadCount);
     });
     
     // Apply downloads to matching dates in chart data
     processedChartData.forEach((point, index) => {
       const downloadsForDate = dateMap.get(point.date);
       if (downloadsForDate !== undefined) {
+        console.log(`Setting downloads for ${point.date}: ${downloadsForDate}`);
         processedChartData[index].downloads = downloadsForDate;
       }
     });
+    
+    console.log("Processed chart data:", processedChartData);
   }
   
   return (
@@ -478,7 +487,8 @@ export function StatsWidget() {
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={(value) => value.toLocaleString()}
-                  domain={[0, 'auto']}
+                  domain={[0, 'dataMax + 30']}
+                  allowDecimals={false}
                 />
                 <Tooltip
                   contentStyle={{ borderRadius: '8px' }}
@@ -499,6 +509,7 @@ export function StatsWidget() {
                   yAxisId="right"
                   dataKey="downloads"
                   fill="#10b981"
+                  maxBarSize={40}
                   name="Spaces Downloaded"
                   radius={[2, 2, 0, 0]}
                 />
