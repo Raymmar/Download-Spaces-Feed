@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowUpIcon, ArrowDownIcon, MinusIcon } from "lucide-react";
+import { GlobeViz } from "@/components/GlobeViz";
 
 // Parse CSV data
 const csvData = `
@@ -522,6 +523,9 @@ export function StatsWidget() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Add Globe Visualization */}
+      <GlobeViz />
     </div>
   );
 }

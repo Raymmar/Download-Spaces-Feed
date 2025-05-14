@@ -282,6 +282,48 @@ export function registerRoutes(app: Express): Server {
     clients.add(res);
     req.on("close", () => clients.delete(res));
   });
+  
+  // Location data for globe visualization
+  app.get("/api/webhooks/locations", async (req, res) => {
+    try {
+      const timeframe = req.query.timeframe as string || 'month';
+      const now = new Date();
+      let startDate: Date;
+      
+      // Set timeframe based on query parameter
+      if (timeframe === 'day') {
+        // Last 24 hours
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - 1);
+      } else if (timeframe === 'week') {
+        // Last 7 days
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - 7);
+      } else {
+        // Last 30 days (default)
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - 30);
+      }
+      
+      // Get location data grouped by city
+      const locationData = await db
+        .select({
+          city: webhooks.city,
+          region: webhooks.region,
+          country: webhooks.country,
+          count: sql<number>`count(*)::int`
+        })
+        .from(webhooks)
+        .where(sql`created_at >= ${startDate.toISOString()}`)
+        .groupBy(webhooks.city, webhooks.region, webhooks.country)
+        .orderBy(sql`count(*) desc`);
+      
+      res.json(locationData);
+    } catch (error) {
+      console.error("Error fetching location data:", error);
+      res.status(500).json({ error: "Failed to fetch location data" });
+    }
+  });
 
   // Daily cleanup task
   const runDailyCleanup = async () => {
