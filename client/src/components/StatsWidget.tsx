@@ -529,15 +529,17 @@ export function StatsWidget() {
         <CardContent>
           <div className="h-[120px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dailyDownloadsData.slice(-14)} // Show last 14 days
-                margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+              <BarChart 
+                data={dailyDownloadsData} // Show all available days (up to 60)
+                margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+              >
                 <XAxis 
                   dataKey="day" 
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
-                  interval="preserveStartEnd"
-                  minTickGap={20}
+                  interval={8}  // Show only every 9th tick to avoid overcrowding
+                  minTickGap={10}
                 />
                 <YAxis 
                   fontSize={11}
