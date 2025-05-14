@@ -277,48 +277,23 @@ type ChartDataPoint = {
 };
 
 // Parse CSV data into chart format
-// Utility function to standardize date formats
-const standardizeDate = (dateStr: string): { isoDate: string, displayDate: string } => {
-  // Parse the date string (handles both '2025-04-28' and '8/1/24' formats)
-  let parsedDate: Date;
-  
-  if (dateStr.includes('/')) {
-    // Handle MM/DD/YY format from CSV
-    const [month, day, yearShort] = dateStr.split('/');
-    const year = yearShort.length === 2 ? `20${yearShort}` : yearShort;
-    parsedDate = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00Z`);
-  } else {
-    // Handle ISO format from API
-    parsedDate = new Date(dateStr);
-  }
-  
-  // Create consistent formats for both storage and display
-  const isoDate = parsedDate.toISOString().split('T')[0]; // YYYY-MM-DD
-  const displayDate = parsedDate.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-  
-  return { isoDate, displayDate };
-};
-
 const chartData: ChartDataPoint[] = csvData
   .split("\n")
   .slice(1)
   .map((line: string) => {
     const [date, users] = line.split(",");
-    if (!date || !users) return null;
-    
-    const { displayDate } = standardizeDate(date);
-    
+    const parsedDate = new Date(date);
     return {
-      date: displayDate,
+      date: parsedDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
       users: parseInt(users) || 0,
       // We'll add the downloads data later from the API
       downloads: 0,
     };
   })
-  .filter((data): data is ChartDataPoint => data !== null && data.users > 0);
+  .filter((data: ChartDataPoint) => data.users > 0);
 
 // Define the type for our stats response
 type WebhookStats = {
@@ -426,51 +401,30 @@ export function StatsWidget() {
   if (dailyDownloads?.length) {
     console.log("Daily downloads data:", dailyDownloads);
     
-    // Create date-based maps for quick lookup using standardized formats
-    // Use ISO format date (YYYY-MM-DD) as the key for reliable matching
+    // Create a date map for quick lookup from the API data
     const downloadMap = new Map<string, number>();
-    const displayToIsoMap = new Map<string, string>();
     
-    // Convert API dates to standardized formats and populate maps
+    // Convert API dates (2025-03-18 format) to the same format as our chart dates
     dailyDownloads.forEach(item => {
-      if (!item.date) return;
+      const apiDate = new Date(item.date);
+      // Format to match chart date format (e.g., "Mar 18")
+      const month = apiDate.toLocaleString('en-US', { month: 'short' });
+      const day = apiDate.getDate();
+      const formattedDate = `${month} ${day}`;
       
-      const { isoDate, displayDate } = standardizeDate(item.date);
       const downloads = parseInt(item.downloads, 10);
-      
-      downloadMap.set(isoDate, downloads);
-      displayToIsoMap.set(displayDate, isoDate);
+      downloadMap.set(formattedDate, downloads);
     });
     
-    // Create reverse mapping for chart display dates
+    // Apply the real download data where dates match
     processedChartData.forEach((point, index) => {
-      // For each chart point, get its ISO date equivalent
-      if (!point.date) return;
-      
-      // First, convert chart display date to ISO date
-      const chartIsoDate = displayToIsoMap.get(point.date);
-      
-      // If we have a direct match, use it
-      if (chartIsoDate && downloadMap.has(chartIsoDate)) {
-        processedChartData[index].downloads = downloadMap.get(chartIsoDate) || 0;
-      } else {
-        // For dates that don't have an exact match, we'll try matching by month/day only
-        const pointDate = new Date(point.date + ", 2024");
-        const pointMonth = pointDate.getMonth();
-        const pointDay = pointDate.getDate();
-        
-        // Look for any date with matching month/day, regardless of year
-        for (const [isoDate, downloadCount] of downloadMap.entries()) {
-          const downloadDate = new Date(isoDate);
-          if (downloadDate.getMonth() === pointMonth && downloadDate.getDate() === pointDay) {
-            processedChartData[index].downloads = downloadCount;
-            break;
-          }
-        }
+      const downloadCount = downloadMap.get(point.date);
+      if (downloadCount !== undefined) {
+        processedChartData[index].downloads = downloadCount;
       }
     });
     
-    console.log("Processed chart data with standardized downloads:", processedChartData);
+    console.log("Processed chart data with real downloads:", processedChartData);
   }
   
   return (
