@@ -345,27 +345,11 @@ export function StatsWidget() {
   });
   
   const { data: webhookStats, isLoading: statsLoading } = useQuery<WebhookStats>({
-    queryKey: ["/api/webhooks/stats", Date.now()], // Add timestamp to force fresh data
+    queryKey: ["/api/webhooks/stats"],
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    queryFn: async () => {
-      // Manually add cache control headers
-      const response = await fetch(`/api/webhooks/stats?t=${Date.now()}`, {
-        method: 'GET',
-        headers: {
-          'Cache-Control': 'no-cache, no-store',
-          'Pragma': 'no-cache'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      
-      const data = await response.json();
-      console.log("Stats data received:", data);
-      return data;
-    }
+    refetchInterval: 10000, // Refetch every 10 seconds
+    staleTime: 0 // Consider data stale immediately
   });
 
   return (

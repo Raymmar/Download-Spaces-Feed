@@ -132,18 +132,13 @@ export function registerRoutes(app: Express): Server {
     }
   });
   
-  // Get webhook counts for different time periods with comparisons with cache buster
+  // Get webhook counts for different time periods with comparisons
   app.get("/api/webhooks/stats", async (req, res) => {
     try {
-      // Force fresh results with no cache
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      // Set simple no-cache headers
+      res.setHeader('Cache-Control', 'no-store');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
-      
-      // Extra protections for cache busting
-      res.setHeader('Surrogate-Control', 'no-store');
-      res.setHeader('ETag', Math.random().toString(36));
-      res.setHeader('Last-Modified', new Date().toUTCString());
       
       const now = new Date();
       
