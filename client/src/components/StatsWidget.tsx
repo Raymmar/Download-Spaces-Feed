@@ -443,7 +443,7 @@ export function StatsWidget() {
   
   return (
     <div className="space-y-4">
-      <Card className="mt-4">
+      <Card>
         <CardContent className="p-6">
           <p className="text-muted-foreground pb-4">
             This website displays live activity from the{" "}

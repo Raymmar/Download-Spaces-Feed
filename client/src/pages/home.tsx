@@ -156,7 +156,7 @@ export default function Home() {
                 No webhooks received yet.
               </div>
             ) : (
-              <div className="space-y-4 pt-4 pr-4">
+              <div className="space-y-4 pt-0 pr-4">
                 {webhooks.map((webhook) => (
                   <Card key={webhook.id}>
                     <CardContent className="p-4">
@@ -242,7 +242,7 @@ export default function Home() {
           <div>
             <div className="lg:sticky lg:top-[88px] lg:h-[calc(100vh-100px)]">
               <ScrollArea className="h-full">
-                <div className="pr-4">
+                <div className="pr-4 pt-0">
                   <StatsWidget />
                   <div className="mt-4 text-center">
                     <Link href="/privacy">
