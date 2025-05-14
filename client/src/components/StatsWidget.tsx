@@ -310,22 +310,22 @@ function ChangeIndicator({ change }: { change: number | null }) {
   
   if (change > 0) {
     return (
-      <div className="flex items-center text-green-500">
-        <ArrowUpIcon className="mr-1 h-4 w-4" />
+      <div className="flex items-center text-green-500 whitespace-nowrap">
+        <ArrowUpIcon className="mr-1 h-4 w-4 flex-shrink-0" />
         <span>+{change.toFixed(1)}%</span>
       </div>
     );
   } else if (change < 0) {
     return (
-      <div className="flex items-center text-red-500">
-        <ArrowDownIcon className="mr-1 h-4 w-4" />
+      <div className="flex items-center text-red-500 whitespace-nowrap">
+        <ArrowDownIcon className="mr-1 h-4 w-4 flex-shrink-0" />
         <span>{change.toFixed(1)}%</span>
       </div>
     );
   } else {
     return (
-      <div className="flex items-center text-gray-500">
-        <MinusIcon className="mr-1 h-4 w-4" />
+      <div className="flex items-center text-gray-500 whitespace-nowrap">
+        <MinusIcon className="mr-1 h-4 w-4 flex-shrink-0" />
         <span>0%</span>
       </div>
     );
@@ -438,19 +438,19 @@ export function StatsWidget() {
               Last 30 Days
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pb-4">
             <div className="text-2xl font-bold">
               {statsLoading ? "Loading..." : webhookStats?.month.count.toLocaleString()}
             </div>
-            <div className="mt-1 text-xs flex items-center">
-              <span className="text-muted-foreground mr-1">vs previous:</span>
+            <div className="mt-1">
+              <p className="text-xs text-muted-foreground">vs previous:</p>
               {statsLoading ? (
-                <span>Loading...</span>
+                <span className="text-xs">Loading...</span>
               ) : (
-                <>
-                  <span className="mr-1">{webhookStats?.month.previous.toLocaleString()}</span>
+                <div className="flex items-center text-sm mt-1">
+                  <span className="mr-2">{webhookStats?.month.previous.toLocaleString()}</span>
                   <ChangeIndicator change={webhookStats?.month.change || null} />
-                </>
+                </div>
               )}
             </div>
           </CardContent>
@@ -462,19 +462,19 @@ export function StatsWidget() {
               Last 7 Days
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pb-4">
             <div className="text-2xl font-bold">
               {statsLoading ? "Loading..." : webhookStats?.week.count.toLocaleString()}
             </div>
-            <div className="mt-1 text-xs flex items-center">
-              <span className="text-muted-foreground mr-1">vs previous:</span>
+            <div className="mt-1">
+              <p className="text-xs text-muted-foreground">vs previous:</p>
               {statsLoading ? (
-                <span>Loading...</span>
+                <span className="text-xs">Loading...</span>
               ) : (
-                <>
-                  <span className="mr-1">{webhookStats?.week.previous.toLocaleString()}</span>
+                <div className="flex items-center text-sm mt-1">
+                  <span className="mr-2">{webhookStats?.week.previous.toLocaleString()}</span>
                   <ChangeIndicator change={webhookStats?.week.change || null} />
-                </>
+                </div>
               )}
             </div>
           </CardContent>
@@ -486,19 +486,19 @@ export function StatsWidget() {
               Today
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pb-4">
             <div className="text-2xl font-bold">
               {statsLoading ? "Loading..." : webhookStats?.today.count.toLocaleString()}
             </div>
-            <div className="mt-1 text-xs flex items-center">
-              <span className="text-muted-foreground mr-1">vs yesterday:</span>
+            <div className="mt-1">
+              <p className="text-xs text-muted-foreground">vs yesterday:</p>
               {statsLoading ? (
-                <span>Loading...</span>
+                <span className="text-xs">Loading...</span>
               ) : (
-                <>
-                  <span className="mr-1">{webhookStats?.today.previous.toLocaleString()}</span>
+                <div className="flex items-center text-sm mt-1">
+                  <span className="mr-2">{webhookStats?.today.previous.toLocaleString()}</span>
                   <ChangeIndicator change={webhookStats?.today.change || null} />
-                </>
+                </div>
               )}
             </div>
           </CardContent>
