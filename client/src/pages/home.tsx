@@ -156,7 +156,7 @@ export default function Home() {
                 No webhooks received yet.
               </div>
             ) : (
-              <div className="space-y-4 pt-0 pr-4">
+              <div className="space-y-4 pt-4 pr-4">
                 {webhooks.map((webhook) => (
                   <Card key={webhook.id}>
                     <CardContent className="p-4">

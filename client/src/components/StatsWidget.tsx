@@ -15,10 +15,6 @@ import {
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowUpIcon, ArrowDownIcon, MinusIcon } from "lucide-react";
-import { useState } from "react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Parse CSV data
 const csvData = `
@@ -562,7 +558,6 @@ export function StatsWidget() {
       {/* All stats cards shown together */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Growth Metrics</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Rolling stats - displayed first */}
