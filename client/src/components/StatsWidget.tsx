@@ -9,6 +9,7 @@ import {
   YAxis,
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
+import { ArrowUpIcon, ArrowDownIcon, MinusIcon } from "lucide-react";
 
 // Parse CSV data
 const csvData = `
@@ -282,9 +283,62 @@ const chartData: ChartDataPoint[] = csvData
   })
   .filter((data: ChartDataPoint) => data.users > 0);
 
+// Define the type for our stats response
+type WebhookStats = {
+  today: {
+    count: number;
+    previous: number;
+    change: number | null;
+  };
+  week: {
+    count: number;
+    previous: number;
+    change: number | null;
+  };
+  month: {
+    count: number;
+    previous: number;
+    change: number | null;
+  };
+};
+
+// Component to display change indicator
+function ChangeIndicator({ change }: { change: number | null }) {
+  if (change === null) {
+    return <MinusIcon className="h-4 w-4 text-gray-500" />;
+  }
+  
+  if (change > 0) {
+    return (
+      <div className="flex items-center text-green-500">
+        <ArrowUpIcon className="mr-1 h-4 w-4" />
+        <span>+{change.toFixed(1)}%</span>
+      </div>
+    );
+  } else if (change < 0) {
+    return (
+      <div className="flex items-center text-red-500">
+        <ArrowDownIcon className="mr-1 h-4 w-4" />
+        <span>{change.toFixed(1)}%</span>
+      </div>
+    );
+  } else {
+    return (
+      <div className="flex items-center text-gray-500">
+        <MinusIcon className="mr-1 h-4 w-4" />
+        <span>0%</span>
+      </div>
+    );
+  }
+}
+
 export function StatsWidget() {
   const { data: webhookCount } = useQuery<number>({
     queryKey: ["/api/webhooks/count"],
+  });
+  
+  const { data: webhookStats, isLoading: statsLoading } = useQuery<WebhookStats>({
+    queryKey: ["/api/webhooks/stats"],
   });
 
   return (
@@ -371,6 +425,81 @@ export function StatsWidget() {
           <CardContent>
             <div className="text-4xl font-bold">
               {Number(webhookCount).toLocaleString("en-US") ?? "Loading..."}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* New time-based stat cards */}
+      <div className="grid grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              Last 30 Days
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {statsLoading ? "Loading..." : webhookStats?.month.count.toLocaleString()}
+            </div>
+            <div className="mt-1 text-xs flex items-center">
+              <span className="text-muted-foreground mr-1">vs previous:</span>
+              {statsLoading ? (
+                <span>Loading...</span>
+              ) : (
+                <>
+                  <span className="mr-1">{webhookStats?.month.previous.toLocaleString()}</span>
+                  <ChangeIndicator change={webhookStats?.month.change || null} />
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              Last 7 Days
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {statsLoading ? "Loading..." : webhookStats?.week.count.toLocaleString()}
+            </div>
+            <div className="mt-1 text-xs flex items-center">
+              <span className="text-muted-foreground mr-1">vs previous:</span>
+              {statsLoading ? (
+                <span>Loading...</span>
+              ) : (
+                <>
+                  <span className="mr-1">{webhookStats?.week.previous.toLocaleString()}</span>
+                  <ChangeIndicator change={webhookStats?.week.change || null} />
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              Today
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {statsLoading ? "Loading..." : webhookStats?.today.count.toLocaleString()}
+            </div>
+            <div className="mt-1 text-xs flex items-center">
+              <span className="text-muted-foreground mr-1">vs yesterday:</span>
+              {statsLoading ? (
+                <span>Loading...</span>
+              ) : (
+                <>
+                  <span className="mr-1">{webhookStats?.today.previous.toLocaleString()}</span>
+                  <ChangeIndicator change={webhookStats?.today.change || null} />
+                </>
+              )}
             </div>
           </CardContent>
         </Card>

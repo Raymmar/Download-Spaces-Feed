@@ -131,6 +131,115 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({ error: "Failed to count webhooks" });
     }
   });
+  
+  // Get webhook counts for different time periods with comparisons
+  app.get("/api/webhooks/stats", async (req, res) => {
+    try {
+      // Force fresh results with no cache
+      res.setHeader('Cache-Control', 'no-cache');
+      
+      const now = new Date();
+      const todayStart = new Date(now);
+      todayStart.setHours(0, 0, 0, 0);
+      
+      const yesterdayStart = new Date(todayStart);
+      yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+      
+      const weekStart = new Date(todayStart);
+      weekStart.setDate(weekStart.getDate() - 6); // Last 7 days including today
+      
+      const prevWeekStart = new Date(weekStart);
+      prevWeekStart.setDate(prevWeekStart.getDate() - 7);
+      
+      const monthStart = new Date(todayStart);
+      monthStart.setDate(monthStart.getDate() - 29); // Last 30 days including today
+      
+      const prevMonthStart = new Date(monthStart);
+      prevMonthStart.setDate(prevMonthStart.getDate() - 30);
+      
+      // Today's count
+      const todayResult = await db.select({ 
+        count: sql<number>`count(id)::int` 
+      })
+      .from(webhooks)
+      .where(sql`created_at >= ${todayStart.toISOString()}`);
+      
+      // Yesterday's count
+      const yesterdayResult = await db.select({ 
+        count: sql<number>`count(id)::int` 
+      })
+      .from(webhooks)
+      .where(sql`created_at >= ${yesterdayStart.toISOString()} AND created_at < ${todayStart.toISOString()}`);
+      
+      // Last 7 days count
+      const weekResult = await db.select({ 
+        count: sql<number>`count(id)::int` 
+      })
+      .from(webhooks)
+      .where(sql`created_at >= ${weekStart.toISOString()}`);
+      
+      // Previous 7 days count
+      const prevWeekResult = await db.select({ 
+        count: sql<number>`count(id)::int` 
+      })
+      .from(webhooks)
+      .where(sql`created_at >= ${prevWeekStart.toISOString()} AND created_at < ${weekStart.toISOString()}`);
+      
+      // Last 30 days count
+      const monthResult = await db.select({ 
+        count: sql<number>`count(id)::int` 
+      })
+      .from(webhooks)
+      .where(sql`created_at >= ${monthStart.toISOString()}`);
+      
+      // Previous 30 days count
+      const prevMonthResult = await db.select({ 
+        count: sql<number>`count(id)::int` 
+      })
+      .from(webhooks)
+      .where(sql`created_at >= ${prevMonthStart.toISOString()} AND created_at < ${monthStart.toISOString()}`);
+      
+      // Calculate percentage changes
+      const todayCount = todayResult[0]?.count || 0;
+      const yesterdayCount = yesterdayResult[0]?.count || 0;
+      const todayChange = yesterdayCount > 0 
+        ? ((todayCount - yesterdayCount) / yesterdayCount) * 100 
+        : null;
+      
+      const weekCount = weekResult[0]?.count || 0;
+      const prevWeekCount = prevWeekResult[0]?.count || 0;
+      const weekChange = prevWeekCount > 0 
+        ? ((weekCount - prevWeekCount) / prevWeekCount) * 100 
+        : null;
+      
+      const monthCount = monthResult[0]?.count || 0;
+      const prevMonthCount = prevMonthResult[0]?.count || 0;
+      const monthChange = prevMonthCount > 0 
+        ? ((monthCount - prevMonthCount) / prevMonthCount) * 100 
+        : null;
+      
+      res.json({
+        today: {
+          count: todayCount,
+          previous: yesterdayCount,
+          change: todayChange
+        },
+        week: {
+          count: weekCount,
+          previous: prevWeekCount,
+          change: weekChange
+        },
+        month: {
+          count: monthCount,
+          previous: prevMonthCount,
+          change: monthChange
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching webhook stats:", error);
+      res.status(500).json({ error: "Failed to fetch webhook stats" });
+    }
+  });
 
   // SSE endpoint for real-time updates
   app.get("/api/events", (req, res) => {
