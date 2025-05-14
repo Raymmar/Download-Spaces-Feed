@@ -345,7 +345,12 @@ export function StatsWidget() {
   });
   
   const { data: webhookStats, isLoading: statsLoading } = useQuery<WebhookStats>({
-    queryKey: ["/api/webhooks/stats"],
+    queryKey: ["/api/webhooks/stats", Date.now()], // Add cache-busting timestamp
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    onSuccess: (data) => {
+      console.log("Stats data received:", data); // Debug the response
+    }
   });
 
   return (
