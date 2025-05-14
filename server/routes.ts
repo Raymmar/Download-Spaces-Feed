@@ -243,6 +243,61 @@ export function registerRoutes(app: Express): Server {
       const currentMonthName = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(currentMonthStart);
       const previousMonthName = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(previousMonthStart);
       
+      // Calculate rolling averages for 7, 14, and 30 days
+      
+      // Last 7 days rolling
+      const sevenDaysAgo = new Date(now);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const sevenDaysAgoResult = await db.select({ 
+        count: sql<number>`count(id)::int` 
+      })
+      .from(webhooks)
+      .where(sql`created_at >= ${sevenDaysAgo.toISOString()}`);
+      
+      // Last 14 days for 7-day comparison
+      const fourteenDaysAgo = new Date(now);
+      fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+      const prevSevenDaysResult = await db.select({ 
+        count: sql<number>`count(id)::int` 
+      })
+      .from(webhooks)
+      .where(sql`created_at >= ${fourteenDaysAgo.toISOString()} AND created_at < ${sevenDaysAgo.toISOString()}`);
+      
+      // Last 30 days rolling
+      const thirtyDaysAgo = new Date(now);
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const thirtyDaysResult = await db.select({ 
+        count: sql<number>`count(id)::int` 
+      })
+      .from(webhooks)
+      .where(sql`created_at >= ${thirtyDaysAgo.toISOString()}`);
+      
+      // Previous 30 days for comparison
+      const sixtyDaysAgo = new Date(now);
+      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+      const prevThirtyDaysResult = await db.select({ 
+        count: sql<number>`count(id)::int` 
+      })
+      .from(webhooks)
+      .where(sql`created_at >= ${sixtyDaysAgo.toISOString()} AND created_at < ${thirtyDaysAgo.toISOString()}`);
+      
+      // Calculate daily average for current and previous periods
+      const last7Count = sevenDaysAgoResult[0]?.count || 0;
+      const prev7Count = prevSevenDaysResult[0]?.count || 0;
+      const last7DailyAvg = last7Count / 7;
+      const prev7DailyAvg = prev7Count / 7;
+      const last7Change = prev7DailyAvg > 0 
+        ? ((last7DailyAvg - prev7DailyAvg) / prev7DailyAvg) * 100 
+        : null;
+      
+      const last30Count = thirtyDaysResult[0]?.count || 0;
+      const prev30Count = prevThirtyDaysResult[0]?.count || 0;
+      const last30DailyAvg = last30Count / 30;
+      const prev30DailyAvg = prev30Count / 30;
+      const last30Change = prev30DailyAvg > 0 
+        ? ((last30DailyAvg - prev30DailyAvg) / prev30DailyAvg) * 100 
+        : null;
+      
       res.json({
         total: totalCount,
         today: {
@@ -265,6 +320,24 @@ export function registerRoutes(app: Express): Server {
           change: monthChange,
           label: currentMonthName,
           comparisonLabel: `vs ${previousMonthName}`
+        },
+        rolling: {
+          last7days: {
+            count: Math.round(last7DailyAvg * 7),
+            dailyAverage: Math.round(last7DailyAvg),
+            previousAverage: Math.round(prev7DailyAvg),
+            change: last7Change,
+            label: "Last 7 Days",
+            comparisonLabel: "vs Previous 7 Days"
+          },
+          last30days: {
+            count: Math.round(last30DailyAvg * 30),
+            dailyAverage: Math.round(last30DailyAvg),
+            previousAverage: Math.round(prev30DailyAvg),
+            change: last30Change,
+            label: "Last 30 Days",
+            comparisonLabel: "vs Previous 30 Days"
+          }
         }
       });
     } catch (error) {
